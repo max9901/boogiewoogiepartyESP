@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+    
+    <style>
+    body {
+        margin: 0;
+    }
+    button{
+        cursor: pointer;
+    }
+    #mainsrc{
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        top: 0;
+        background-color: black;
+    }
+
+    #content-blocks{
+        display: none;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 100%;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: auto;
+        margin-bottom: auto;
+        /* background-color: black; */
+    }
+
+    #matrix{
+        display:none;
+    }
+
+
+    .strobe {
+        float: left;
+        margin: 0;
+        padding: 0;
+        width: 120px;
+        height:120px;
+        -webkit-transition: background-color 0.2s ease-in;
+        -moz-transition: background-color 0.2s ease-in;
+        -ms-transition: background-color 0.2s ease-in;
+        -o-transition: background-color 0.2s ease-in;
+    }
+    </style>
+<body onload="javascript:start();" style="background-color:black;">
+    <div id=mainsrc>
+        <div id=content-blocks></div>
+        <canvas id="matrix"</canvas></canvas>
+    </div>
+</body>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script>
+
+$(window).bind('resize', function() {
+     console.log("resize");
+     element = document.getElementById('mainsrc');
+     positionInfo = element.getBoundingClientRect();
+     height = positionInfo.height;
+     width = positionInfo.width;
+     wm = canvas.width = width;
+     hm = canvas.height = height;
+     cols = Math.floor(wm / 20) + 1;
+     ypos = Array(cols).fill(0);
+});
+
+
+var rgbToHex = function (rgb) { 
+  var hex = Number(rgb).toString(16);
+  if (hex.length < 2) {
+       hex = "0" + hex;
+  }
+  return hex;
+};
+
+var fullColorHex = function(r,g,b) {   
+  var red = rgbToHex(r);
+  var green = rgbToHex(g);
+  var blue = rgbToHex(b);
+  return red+green+blue;
+};
+    
+var setsize = 120;
+var setstrobo = 50;
+var setred = 0;
+var setgreen = 255;
+var setblue = 0;
+var setwhite = 0;
+var setstrobohard = 0;
+
+function strobe(){
+    $('.strobe').each(function(){
+        var saturation = Math.random();
+        r = (saturation * setred);
+        g = (saturation * setgreen);
+        b = (saturation * setblue);
+        w = (saturation * setwhite);
+        if(w){
+            r = (w + setred/2.56)%256;
+            g = (w + setgreen/2.56)%256;
+            b = (w + setblue/2.56)%256;
+        }
+        if(setsize!=0){
+             $(this).css('background-color', 'rgb('+r+','+g+','+b+')');
+        }
+        else{
+            if(w){
+                $(this).css('background-color', 'rgb('+setwhite/4+','+setwhite/4+','+setwhite/4+')');
+            }else{
+                $(this).css('background-color', 'rgb('+setred/2+','+setgreen/2+','+setblue/2+')');
+            }
+        }
+    });
+}
+
+var onflag = 1;
+
+function strobohard(){
+    if(onflag == 0){
+        onflag = 1;
+        document.getElementById("mainsrc").style.display = "block";
+    }else{
+        onflag = 0;
+        document.getElementById("mainsrc").style.display = "none";
+    }
+}
+
+function build(size){
+    if(size != 0){
+        var w =  $("#mainsrc").width();
+        var h =  $("#mainsrc").height();
+        var nbW = Math.floor(w/size);
+        var nbH = Math.floor(h/size);
+        console.log(nbW);
+        console.log(nbH);
+        $('#content-blocks').each(function(){
+            $(this).css('width', size*nbW + 'px');
+            $(this).css('height', size*nbH + 'px');
+        });
+
+        for(i=0;i<(nbW*nbH);i++){
+            $('#content-blocks').append('<div class="strobe"></div>');
+        }
+        $('.strobe').each(function(){
+            $(this).css('width', size + 'px');
+            $(this).css('height', size + 'px');
+        });
+    }
+    else {
+        $('#content-blocks').append('<div class="strobe"></div>');
+        $('.strobe').each(function(){
+            $(this).css('width',  $("#content-blocks").width() + 'px');
+            $(this).css('height', $("#content-blocks").height() + 'px');
+        });
+    }
+}
+// BUILD //
+build(setsize);
+
+// COLOR KEYS //
+var ws;
+var shi;
+var si;
+var si_matrix;
+si = setInterval(strobe, setstrobo);
+clearInterval(si);
+
+function start(){
+      ws = new WebSocket('ws://'+document.location.host+'/wsa',['arduino']);
+      ws.onopen = function(e){
+        console.log("Connected");
+      };
+      ws.onclose = function(e){
+        console.log("Disconnected");
+      };
+      ws.onerror = function(e){
+        console.log("ws error", e);
+      };
+      ws.onmessage = function(e){
+        console.log(e.data);
+        var parts = e.data.split('&'); //afvangen niet splitbaar
+        var i=0;
+        while(parts[i] != ""){
+            var mes = parts[i]
+            console.log(mes);
+            if(mes[0] == 'R'){
+                setred = parseInt(mes.substr(1,3));
+            }
+            if(mes[0] == 'B'){
+                setblue = parseInt(mes.substr(1,3));
+            }
+            if(mes[0] == 'G'){
+                setgreen = parseInt(mes.substr(1,3));
+            }
+            if(mes[0] == 'W'){
+                setwhite = parseInt(mes.substr(1,3));
+            }
+            if(mes[0] == 'O'){
+                setsize = parseInt(mes.substr(1,3));
+                $('.strobe').remove();
+                build(setsize);
+            }
+            if(mes[0] == 'S'){
+                setstrobohard = parseInt(mes.substr(1,3));
+                clearInterval(shi);
+                document.getElementById("mainsrc").style.display = "block";
+                if(setstrobohard > 0){    
+                    shi = setInterval(strobohard, (1000)/((setstrobohard) / 2.55));
+                }
+            }
+            if(mes[0] == 'I'){
+                setstrobo = parseInt(mes.substr(1,3));
+                clearInterval(si);
+                if(setstrobo > 0){    
+                    si = setInterval(strobe, ((100000)/(setstrobo) / 2.55));
+                }
+            }
+            i++;
+        }
+        hexrgb = fullColorHex(setred,setgreen,setblue);
+        strobe();
+      };
+}
+
+var hexrgb;
+
+$(window).keyup(function(e){
+    if     (e.which==82){setred = 255; setblue = 0; setgreen = 0;}
+    else if(e.which==71){setred = 0; setblue = 0; setgreen = 255;}      //this.strobeColor = 'g';
+    else if(e.which==66){setred = 0; setblue = 255; setgreen = 0;}      //this.strobeColor = 'b';
+    else if(e.which==89){setred = 255; setblue = 0; setgreen = 255;}    //this.strobeColor = 'y';
+    // else if(e.which==77){setred = 255; setblue = 255; setgreen = 0;}    //this.strobeColor = 'm';
+    else if(e.which==67){setred = 0; setblue = 255; setgreen = 255;}    //this.strobeColor = 'c';
+    else if(e.which==87){setred = 255; setblue = 255; setgreen = 255;}      //this.strobeColor = 'w';
+    else if(e.which==107){        //+   
+        if(setstrobo < 245){
+            setstrobo = setstrobo + 10;
+            console.log(setstrobo);
+            clearInterval(si);
+            si = setInterval(strobe, ((100000)/(setstrobo) / 2.55));
+            clearInterval(si_matrix);
+            si_matrix = setInterval(matrix, ((10000)/(setstrobo) / 2.55));
+        }
+    }
+    else if(e.which==109){ //-
+        if(setstrobo > 10){
+            setstrobo = setstrobo - 10;
+            console.log(setstrobo);
+        }else{
+            setstrobo = 0;
+            console.log(setstrobo);
+        }
+        clearInterval(si);
+        si = setInterval(strobe, ((100000)/(setstrobo) / 2.55));
+        clearInterval(si_matrix);
+        if(setstrobo > 0)
+            si_matrix = setInterval(matrix, ((10000)/(setstrobo) / 2.55));
+    }
+    else if(e.which==105){        //9
+        if(setstrobohard < 245){
+            setstrobohard = setstrobohard + 10;
+            console.log(setstrobohard);
+            clearInterval(shi);
+            shi = setInterval(strobohard, (1000)/((setstrobohard) / 2.55));
+        }
+    } 
+    else if(e.which==102){    //6
+        if(setstrobohard > 10){
+            setstrobohard = setstrobohard - 10;
+            console.log(setstrobohard);
+        }else{
+            setstrobohard = 0;
+            console.log(setstrobohard);
+        }
+        document.getElementById("mainsrc").style.display = "block";
+        clearInterval(shi);
+        if(setstrobohard > 0)
+            shi = setInterval(strobohard, (1000)/((setstrobohard) / 2.55));
+    }
+    else if(e.which==78){       //n
+        document.getElementById("content-blocks").style.display = "block";
+        document.getElementById("matrix").style.display = "none";
+    }
+    else if(e.which==77){     //m
+        document.getElementById("content-blocks").style.display = "none";
+        document.getElementById("matrix").style.display = "block";
+    }
+    else if(e.which==188){    //,
+        document.getElementById("content-blocks").style.display = "block";
+        document.getElementById("matrix").style.display = "block";
+    }
+
+    console.log(e.which);
+    console.log("key");
+    hexrgb = fullColorHex(setred,setgreen,setblue);
+    strobe();
+});
+
+// RESIZE //
+var resizeTimer;
+$(window).resize(function(){
+    if(resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function(){
+        resizeTimer = null;
+        $('.strobe').remove();
+        build(setsize);
+    }, 1000);
+});
+
+
+
+// Matrix //
+const canvas = document.getElementById('matrix');
+const ctx = canvas.getContext('2d');
+
+var element = document.getElementById('mainsrc');
+var positionInfo = element.getBoundingClientRect();
+var height = positionInfo.height;
+var width = positionInfo.width;
+
+var wm = canvas.width = width;
+var hm = canvas.height = height;
+var cols = Math.floor(wm / 20) + 1;
+var ypos = Array(cols).fill(0);
+
+function matrix () {
+    ctx.fillStyle = '#0001';
+    ctx.fillRect(0, 0, wm, hm);
+    
+    ctx.fillStyle = '#' + hexrgb;
+    ctx.font = '15pt monospace';
+  
+  ypos.forEach((y, ind) => {
+    const text = String.fromCharCode(Math.random() * 128);
+    const x = ind * 20;
+    ctx.fillText(text, x, y);
+    if (y > 100 + Math.random() * 10000) ypos[ind] = 0;
+    else ypos[ind] = y + 20;
+  });
+}
+si_matrix = setInterval(matrix, setstrobo);
+</script>
+</html>

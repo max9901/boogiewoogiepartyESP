@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control</title>
+</head>
+<style>
+    body{
+        height: 100vh;
+    }
+</style>
+<body>
+    <div class="container" style="height:500px" id="grid-container">
+        <svg width="100%" viewbox = "-305 -305 610 610"height="100%" xmlns="http://www.w3.org/2000/svg" onload="makeDraggable(evt)">
+
+
+            <circle r="210px" cx="0" cy="0" fill="#fff" fill-opacity="0" stroke="#555" />
+            <circle r="120px" cx="0" cy="0" fill="#fff" fill-opacity="0" stroke="#555" />
+            <circle r="50px" cx="0" cy="0" fill="#555" fill-opacity="0.7" stroke="#555" />
+
+
+            <circle r="300" cx="0" cy="0" stroke="#000" fill-opacity="0" stroke-width="3" />
+            <circle item_id="1" class="draggable" cx="0" cy="0" r="50" fill="#3260a8" stroke=#fff />
+
+        </svg>
+    </div>
+    <script>
+        function makeDraggable(evt) {
+            // https://www.petercollingridge.co.uk/tutorials/svg/interactive/dragging/
+
+            var svg = evt.target;
+            var svgpar = svg.parentNode
+            var body = document.body
+
+            // computer
+            svgpar.addEventListener('mousedown', startDrag);
+            body.addEventListener('mousemove', drag);
+            body.addEventListener('mouseup', endDrag);
+            body.addEventListener('mouseleave', endDrag);
+
+            // mobile
+            svgpar.addEventListener('touchstart', startDrag);
+            body.addEventListener('touchmove', drag);
+            svgpar.addEventListener('touchend', endDrag);
+            // body.addEventListener('touchleave', endDrag);
+            svgpar.addEventListener('touchcancel', endDrag);
+
+            var selectedElement, offset;
+            function startDrag(evt) {
+                if (evt.target.classList.contains('draggable')) {
+                    selectedElement = evt.target;
+
+                    var bbox = selectedElement.getBBox();
+                    offset = getMousePosition(evt);
+                    offset.x -= parseFloat(selectedElement.getAttributeNS(null, "cx"));
+                    offset.y -= parseFloat(selectedElement.getAttributeNS(null, "cy"));
+                }
+            }
+
+            function drag(evt) {
+                if (selectedElement) {
+                    evt.preventDefault();
+                    var coord = getMousePosition(evt);
+                    var posX = coord.x - offset.x;
+                    var posY = coord.y - offset.y;
+                    var snapOffset = 0;
+                    r = Math.sqrt(Math.pow(posX, 2) + Math.pow(posY, 2))
+                    rad = Math.atan2(posX, -posY) - Math.PI/2
+                    deg = rad *180/Math.PI
+                    console.log(posX, posY, r, deg)
+
+                    if (r >= 250) {
+                        posX = 250*Math.cos(rad)
+                        posY = 250*Math.sin(rad)                        // return
+
+                    }
+                    selectedElement.setAttributeNS(null, "cx", posX);
+                    selectedElement.setAttributeNS(null, "cy", posY);
+                }
+
+            }
+
+            function endDrag(evt) {
+                // send ajax to update position in db
+                if (selectedElement) {
+                    //     $.ajax({
+                    //         url: "/grid",
+                    //         method: "post",
+                    //         data: {
+                    //             id: selectedElement.getAttributeNS(null, "item_id"),
+                    //             x: evt.target.getAttributeNS(null, "cx"),
+                    //             y: selectedElement.getAttributeNS(null, "cy")
+                    //         }
+                    //     }).done(function () {
+                    //         // alert('updated!');
+                    //     })
+                    selectedElement.setAttributeNS(null, "cx", "0");
+                    selectedElement.setAttributeNS(null, "cy", "0");
+                }
+                selectedElement = false;
+            }
+
+            function getMousePosition(evt) {
+                var CTM = svg.getScreenCTM();
+                if (evt.touches) {
+                    evt = evt.touches[0];
+                }
+                return {
+                    x: (evt.clientX - CTM.e) / CTM.a,
+                    y: (evt.clientY - CTM.f) / CTM.d
+                };
+            }
+        }
+    </script>
+</body>
+
+</html>

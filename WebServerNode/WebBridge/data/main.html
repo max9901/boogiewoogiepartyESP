@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src='buttonboard.js'></script>
+        <title>Main Page</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <style>
+            body {
+                background-color: gainsboro;
+            }
+            h1   {
+                /* border: 1px solid black; */
+                color: gainsboro;
+                margin-bottom: 0px;
+            }
+            h2   {
+                /* border: 1px solid black; */
+                color: gainsboro;
+                margin-bottom: 0px;
+            }
+            .btn {
+                border: 1px solid black;
+                background-color: gainsboro; /* Green */
+                border: none;
+                color: gray;
+                padding: 15px 32px;
+                margin-bottom:5px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                opacity: 1;
+                margin-left: 5px;
+                border-radius: 30px;
+                transition: 0.1s;
+            }
+            .btn:hover {opacity: 0.6}
+            .btn.active {opacity: 0.7}
+            #container {
+                /* border: 1px solid black; */
+                padding: 10px;
+                border-radius: 30px;
+                margin-top: 20px;
+                background-color: #888888;
+                width: 660px;
+                margin-left: auto;
+                margin-right: auto;
+                text-align: center;
+            }
+
+            .subcontainer {
+                /* border: 1px solid black; */
+                background-color: #666666;
+                border-radius: 30px;
+                margin-top: 10px;
+                margin-bottom: 5px;
+                padding: 10px;
+                margin-left: auto;
+                margin-right: auto;
+                text-align: center;
+            }
+
+            .palette {
+                width: 35px;
+                height: 35px;
+                float: left;
+                border-radius: 4px;
+                margin: 5px;
+                box-shadow: inset 0px 2px 1px rgba(0, 0, 0, 0.28);
+                cursor: pointer;
+            }
+            .palette.active {
+                box-shadow: 0 0 0 3px #3F3F40;
+            }
+        </style>
+    </head>
+    <body  onload="onloadfunc()">
+        <header>
+            <div>
+               
+            </div>
+        </header>
+        <div id = container>
+            <h1 class = "title-global"> Max VJ system </h1><br>
+            <div id = options class = subcontainer>
+                <button class="btn" onclick="window.location.href='new';"      > Control  </button>   
+                <button class="btn" onclick="window.location.href='newcolor';" > Screen </button>
+            </div>
+            <div>
+                
+                <div id="buttonboard" class = subcontainer><h2> DeBuG tools </h2></br></div>
+            </div>
+            <div id = Broadcast class = subcontainer>
+                <form> <h2>Broadcast For debugging</h2>
+                    <br>
+                    <input type='text' name='BROADCAST'>
+                    <br>
+                    <br>
+                    <input type='submit' value='Submit'>
+                </form>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        function hasClass(element, classname) {
+            var className = " " + classname + " ";
+            if ((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" " + classname + " ") > -1) {
+            return true;
+            }
+            return false;
+        }
+        function addClass(element, className) {
+            if (!hasClass(element, className)) {
+            element.className += ' ' + className;
+            element.className = element.className.replace(/ +(?= )/g, '').trim()
+            }
+        }
+        function removeClass(node, className) {
+            node.className = node.className.replace(
+            new RegExp('(^|\\s+)' + className + '(\\s+|$)', 'g'),
+            '$1'
+            ).replace(/ +(?= )/g, '').trim();
+        }
+        
+        function onloadfunc() {
+            console.log("hoi")
+            buttonboard = new ButtonboardClass(document.getElementById('buttonboard'));
+            buttonboard.addButton_unique('strobe',btn_stobo);
+            buttonboard.addButton       ('blue'      ,function() {console.log("blue")});
+            buttonboard.addButton       ('red'       ,function() {console.log("red")});
+            buttonboard.addButton       ('green'     ,function() {console.log("green")});
+            buttonboard.addButton       ('full on'   ,function() {console.log("Black out")});
+            buttonboard.addButton       ('black out' ,function() {console.log("Full on")});
+        }
+        
+
+    </script>
+</html>

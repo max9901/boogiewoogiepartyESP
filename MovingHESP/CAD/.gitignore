@@ -1,0 +1,3 @@
+# Ignore temporary solidworks files
+~$*.SLDPRT
+~$*.SLDASM
