@@ -26,40 +26,40 @@ WiFiClient wifiClient;
 Scheduler userScheduler;   // to control your personal task
 
 AsyncWebServer server(80);
-AsyncWebSocket ws("/ws");
-AsyncWebSocket wsA("/wsa");
+AsyncWebSocket ws_ColorPicker("/wsColorPicker");  //infoChannel
+AsyncWebSocket ws_Animation("/wsa");              //AnimationChannel
 
-String red    = "0";
-String green  = "0";
-String blue   = "0";
-String white  = "0";
-String strobo = "0";
 
 SimpleList<uint32_t> nodes;
 SimpleList<uint32_t> sockets;
 
 void sendHeartBEAT(); //prototype
 bool _mesh_calc_delay = false;
+
 Task taskSendMessage( TASK_SECOND * 5, TASK_FOREVER, &sendHeartBEAT ); // start with a one second interval
 
 IPAddress getlocalIP(); //prototype
 IPAddress myIP(0,0,0,0);
 IPAddress myAPIP(0,0,0,0);
 
+
 //funtions
 void sendoverclientlist(){
   Serial.printf("Num nodes: %d\n", nodes.size());
   Serial.printf("Connection list:");
   String listsend = "L{";
-  bool newcomma = false;
+  bool newcomma = true;
   SimpleList<uint32_t>::iterator node = nodes.begin();
+
   while (node != nodes.end()){
     Serial.printf(" %u", *node);
     listsend += *node;
     node++;
+    newcomma = false;
     if(node != nodes.end())
       listsend += ",";
-    }
+  }
+
   SimpleList<uint32_t>::iterator socket = sockets.begin();
   while (socket != sockets.end()){
     if(!newcomma){
@@ -76,13 +76,14 @@ void sendoverclientlist(){
   listsend += "}";
   Serial.println();
   Serial.println(listsend);
-  ws.textAll(listsend);
+  ws_ColorPicker.textAll(listsend);
 }
 
-//Mesh funcitons
+//Mesh functions
 void receivedCallback( const uint32_t &from, const String &msg ) {
+    // Channels inbouwen voor de websockets ??
     Serial.printf("bridge: Received from %u msg=%s\n", from, msg.c_str());
-    ws.textAll(msg);
+    ws_ColorPicker.textAll(msg);
     char buf[msg.length() + 1];
     msg.toCharArray(buf, sizeof(buf));
     Serial.println(buf);
@@ -90,27 +91,10 @@ void receivedCallback( const uint32_t &from, const String &msg ) {
     char *str;
     while ((str = strtok_r(p, "&", &p)) != NULL){
       Serial.println(str);
-      char collor;
-      collor = str[0];
-      if(collor == 'R'){
-        red = String(&str[1]);  
-      }
-      if(collor == 'B'){
-        blue = String(&str[1]);  
-      }
-      if(collor == 'G'){
-        green = String(&str[1]);  
-      }
-      if(collor == 'W'){
-        white = String(&str[1]);  
-      }
-      if(collor == 'S'){
-        strobo = String(&str[1]);  
-      }
-    }
+      Serial.println("TODO");
   }
-void newConnectionCallback(uint32_t nodeId) 
-  {
+}
+void newConnectionCallback(uint32_t nodeId){
     Serial.printf("--> Start: New Connection, nodeId = %u\n", nodeId);
     Serial.printf("--> Start: New Connection, %s\n", mesh.subConnectionJson(true).c_str());
   }
@@ -119,17 +103,14 @@ void changedConnectionCallback(){
   nodes = mesh.getNodeList();
   sendoverclientlist();
   _mesh_calc_delay = true;
-  }
-void nodeTimeAdjustedCallback(int32_t offset) 
-  {
+}
+void nodeTimeAdjustedCallback(int32_t offset){
   Serial.printf("Adjusted time %u Offset = %d\n", mesh.getNodeTime(),offset);
   }
-void onNodeDelayReceived(uint32_t nodeId, int32_t delay)
-  {
+void onNodeDelayReceived(uint32_t nodeId, int32_t delay){
   Serial.printf("Delay from node:%u delay = %d\n", nodeId,delay);
   }
-void reconnect()
-{
+void reconnect(){
   //byte mac[6];
   char MAC[9];
   int i;
@@ -139,8 +120,7 @@ void reconnect()
   sprintf(MAC, "%08X",(uint32_t)ESP.getEfuseMac());  // generate unique addresss.
 #endif
 }
-IPAddress getlocalIP() 
-  {
+IPAddress getlocalIP(){
   return IPAddress(mesh.getStationIP());
   }
 String scanprocessor(const String& var){
@@ -166,29 +146,29 @@ void sendHeartBEAT() {
   taskSendMessage.setInterval( random(TASK_SECOND * 5, TASK_SECOND * 10)); // between 1 and 5 seconds
 }
 
+
 //Web functions
 void notFound(AsyncWebServerRequest *request) {
-    request->send(404, "text/html", "<h1>Not found options -> ip/= broadcast -> ip/new = colorpicker -> ip/newcolor = visuals<\h1> <form>Text to Broadcast<br><input type='text' name='BROADCAST'><br><br><input type='submit' value='Submit'></form>");
+    request->send(404, "text/html", "<h1>Not found options -> ip/= broadcast -> ip/ColorPicker = ColorPicker -> ip/newcolor = visuals<\h1> <form>Text to Broadcast<br><input type='text' name='BROADCAST'><br><br><input type='submit' value='Submit'></form>");
     if (request->hasArg("BROADCAST")){
       String msg = request->arg("BROADCAST");
       mesh.sendBroadcast(msg);
-      ws.textAll(msg);   //websocket to share ! 
-      wsA.textAll(msg);
+      ws_ColorPicker.textAll(msg);   //websocket to share ! 
+      ws_Animation.textAll(msg);
     }  
 }
-void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len)
-{
+void on_ws_ColorPicker_Event(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
   if(type == WS_EVT_CONNECT){
     Serial.print("Websocket client connection received: ");
     Serial.println(client->id());
-    client->text("Hello color picker");
+    client->text("Hello New information channel I will send over some things to start up :D");
+    sendoverclientlist();
   } else if(type == WS_EVT_DISCONNECT){
     Serial.print("Client disconnected: ");
     Serial.println(client->id());
   }
 }
-void onWsAevent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len)
-{
+void on_ws_Animation_Aevent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
   if(type == WS_EVT_CONNECT){
     Serial.print("Websocket client connection received: ");
     Serial.println(client->id());
@@ -209,8 +189,8 @@ void onWsAevent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEvent
   sendoverclientlist();
 }
 
-void setup() 
-  {
+//arduino functions
+void setup(){
   Serial.begin(115200);
   delay(100);
   
@@ -238,10 +218,10 @@ void setup()
   mesh.initOTAReceive(ROLE);
 
   //WEBinit
-  ws.onEvent(onWsEvent);
-  wsA.onEvent(onWsAevent);
-  server.addHandler(&ws);
-  server.addHandler(&wsA);
+  ws_ColorPicker.onEvent(on_ws_ColorPicker_Event);
+  ws_Animation.onEvent(on_ws_Animation_Aevent);
+  server.addHandler(&ws_ColorPicker);
+  server.addHandler(&ws_Animation);
 
   // Main pages
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -250,24 +230,31 @@ void setup()
           String msg = request->arg("BROADCAST");
           mesh.sendBroadcast(msg);
           if(DEBUG) Serial.println(msg);
-          ws.textAll(msg);   //websocket to share ! 
-          wsA.textAll(msg);
+          ws_ColorPicker.textAll(msg);   //websocket to share ! 
+          ws_Animation.textAll(msg);
         }  
     });  
-  server.on("/new", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(SPIFFS, "/new.html", String(), false);
+  server.on("/ColorPicker", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/ColorPicker.html", String(), false);
     });
   server.on("/newcolor", HTTP_GET, [](AsyncWebServerRequest *request){
       request->send(SPIFFS, "/newcolor.html", String(), false);
     });
   
   // Helper pages
-  server.on("/buttonboard.js", HTTP_GET, [](AsyncWebServerRequest *request){
-      request->send(SPIFFS, "/buttonboard.js", String(), false);
+  server.on("/libs/buttonboard.js", HTTP_GET, [](AsyncWebServerRequest *request){
+      Serial.println("INFO: buttonboard.js requested");
+      request->send(SPIFFS, "/libs/buttonboard.js", String(), false);
+    });
+  server.on("/libs/ClientList.js", HTTP_GET, [](AsyncWebServerRequest *request){
+      Serial.println("INFO: Clientlist.js requested"); 
+      request->send(SPIFFS, "/libs/ClientList.js", String(), false);
     });
   
+
   // Callback functions
   server.on("/start", HTTP_GET, [](AsyncWebServerRequest *request){
+      Serial.println("Startup callback -> FI");
       nodes = mesh.getNodeList();
       Serial.printf("Num nodes: %d\n", nodes.size());
       Serial.printf("Connection list:");
@@ -295,19 +282,21 @@ void setup()
           listsend += ",";
         }
       listsend += "}";
-      AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", ("R" + red + "&G" + green + "&B" + blue + "&W" + white + "&S"  + strobo + "&" + listsend + "&"));
+      // AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", ("R" + red + "&G" + green + "&B" + blue + "&W" + white + "&S"  + strobo + "&" + listsend + "&"));
+       AsyncWebServerResponse *response = request->beginResponse(200);
       request->send(response);
-      Serial.println("hiiiiieer werkt");
   });
   server.on("/setRGB", HTTP_GET, [](AsyncWebServerRequest *request)
     {
-    //Saperate Colors are sent through javascript
-      red = request->arg("r");
-      green = request->arg("g");
-      blue = request->arg("b");
-      white = request->arg("w");
-      strobo = request->arg("s");
+      
+      //Saperate Colors are sent through javascript
+      String red = request->arg("r");
+      String green = request->arg("g");
+      String blue = request->arg("b");
+      String white = request->arg("w");
+      String strobo = request->arg("s");
       String clist = request->arg("l");
+
       String temp; 
       String msg = "0," + red + "&1," + green + "&2," + blue + "&3," + white + "&4,"  + strobo + "&";
       Serial.println(msg);
@@ -317,14 +306,14 @@ void setup()
             Serial.println(temp);
             if(temp == "All"){
                 mesh.sendBroadcast(msg);
-                wsA.textAll("R" + red + "&G" + green + "&B" + blue + "&W" + white + "&S"  + strobo + "&");
+                ws_Animation.textAll("R" + red + "&G" + green + "&B" + blue + "&W" + white + "&S"  + strobo + "&");
             }
             else{
               //todo error afhandeling.
               if(temp[0] == 'W'){
                 String Temp2 = temp.substring(1);
                 Serial.println(Temp2);
-                wsA.text(strtoul(Temp2.c_str(),NULL,10), msg);
+                ws_Animation.text(strtoul(Temp2.c_str(),NULL,10), msg);
               }else{
                 mesh.sendSingle(strtoul(temp.c_str(),NULL,10), msg); 
               }
@@ -338,13 +327,13 @@ void setup()
             if(temp == "All"){
                 Serial.print("broadcast");
                 mesh.sendBroadcast(msg);
-                wsA.textAll("R" + red + "&G" + green + "&B" + blue + "&W" + white + "&S"  + strobo + "&");
+                ws_Animation.textAll("R" + red + "&G" + green + "&B" + blue + "&W" + white + "&S"  + strobo + "&");
             }
             else{
               if(temp[0] == 'W'){
                 String Temp2 = temp.substring(1);
                 Serial.println(Temp2);
-                wsA.text(strtoul(Temp2.c_str(),NULL,10), msg);
+                ws_Animation.text(strtoul(Temp2.c_str(),NULL,10), msg);
               }else{
                 mesh.sendSingle(strtoul(temp.c_str(),NULL,10), msg);
               }
@@ -356,6 +345,31 @@ void setup()
       response->addHeader("Test-Header", "My header value");
       request->send(response);
     });
+
+  server.on("/BROADCAST", HTTP_GET, [](AsyncWebServerRequest *request){   
+      if (request->hasArg("BROADCAST")){
+        String msg = request->arg("BROADCAST");
+    
+        mesh.sendBroadcast(msg);
+        ws_Animation.textAll(msg);
+        
+        char buf[msg.length() + 1];
+        msg.toCharArray(buf, sizeof(buf));
+        char *p = buf;
+        char *str;
+        while ((str = strtok_r(p, "&", &p)) != NULL){ // delimiter is the semicolon
+          Serial.println(str);
+          int channelnumber;
+          int value = 0;
+          if(sscanf(str, "%d,%d",&channelnumber,&value) == 2){
+            Serial.println(str);
+            //Vanaf hier dingen regelen !
+          }
+        }
+      }
+
+    });
+
   server.on("/map", HTTP_GET, [](AsyncWebServerRequest *request)
     {
     request->send_P(200, "text/html", "<html><head><script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.js'></script><link href='https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.css' rel='stylesheet' type='text/css' /><style type='text/css'>#mynetwork {width: 1024px;height: 768px;border: 1px solid lightgray;}</style></head><body><h1>PainlessMesh Network Map</h1><div id='mynetwork'></div><a href=https://visjs.org>Made with vis.js<img src='http://www.davidefabbri.net/files/visjs_logo.png' width=40 height=40></a><script>var txt = '%SCAN%';</script><script type='text/javascript' src='http://www.davidefabbri.net/files/painlessmeshmap.js'></script></body></html>", scanprocessor );
@@ -372,16 +386,17 @@ void setup()
 
   }
 void loop(){
-    ws.cleanupClients();
-    wsA.cleanupClients();
+    ws_ColorPicker.cleanupClients();
+    ws_Animation.cleanupClients();
     mesh.update();
+
     if(myIP != getlocalIP()){
       myIP = getlocalIP();
       Serial.println("My IP is " + myIP.toString());
     }
+
     if(myAPIP != IPAddress(mesh.getAPIP())){
       myAPIP = IPAddress(mesh.getAPIP());
       Serial.println("My AP IP is " + myAPIP.toString());
     }
 }
-

@@ -53,12 +53,3 @@ class ButtonboardClass{
         return button;
     }
 }
-
-var buttonboard
-function btn_stobo(strobo_button){
-    if (strobo_button.className.includes('active')){
-        console.log("strobo ON");
-    }else{
-        console.log("strobo off")
-    }
-}

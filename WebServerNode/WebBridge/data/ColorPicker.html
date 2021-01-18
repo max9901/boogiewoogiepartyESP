@@ -1,3 +1,4 @@
+<!-- REDESIGNEN -->
 <!DOCTYPE html>
 <html>
 <head><title>RGB LED Color Control</title>
@@ -11,6 +12,7 @@
   margin-right: auto;
  }
 
+
  .main-picker-container {
   display: inline-block;
   text-align: center;
@@ -22,6 +24,7 @@
   margin-right: auto;
   border: 2px solid #f8fafb;
 }
+
 .main-picker-container  .clients-container {
   display: inline-block;
   text-align: center;
@@ -266,6 +269,7 @@
   //  this.dom.clients.list.splice(0,1);     
   //  this.addClient("All");
   }
+
   ColorPicker.prototype.addClient = function(name) {
 
     var client = document.createElement('div');
@@ -275,6 +279,7 @@
     var $this = this;
     client.addEventListener('click', function() {
     picker.activeclientsString = "";
+
     if(this.className == "client"){
       addClass(this, 'active');
     }
@@ -304,6 +309,7 @@
     this.dom.clients.list.push(client);
     return client;
   }
+
   ColorPicker.prototype.updateClientList = function(list) {
     console.log(this.dom.clients.list.length);
     for (var i = this.dom.clients.list.length; i > 1 ; i--) {
@@ -311,9 +317,9 @@
           this.dom.clients.list[i-1].remove();
           this.dom.clients.list.splice(i-1,1);    
     }
-  for (var i = 0; i < list.length; i++) {
-      this.addClient(list[i]);
-  }
+    for (var i = 0; i < list.length; i++) {
+        this.addClient(list[i]);
+    }
   }
   ColorPicker.prototype.initPicker = function() {
 
@@ -914,10 +920,6 @@ function send(red, green, blue,white,strobo){
   strobos = strobo;
   if(redc == red && greenc == green && bluec == blue && stroboc == strobo && whitec == white)
     return;
-
-
-
-
   //Set RGB LED Color
   if (lastClick >= (Date.now() - delay))
         return;
@@ -938,18 +940,16 @@ function send(red, green, blue,white,strobo){
   };
   var clientactivelist = 1255;
 
-
-  //dit moeten we fixen 
+  //dit moeten we fixen liever websockets !
   xhttp.open("GET", "setRGB?r="+red+"&g="+green+"&b="+blue+"&w="+whitec+"&s="+stroboc +"&l={" + picker.activeclientsString + "}" + "", true); //Handle readADC server on ESP8266
-  
   xhttp.send();
 } 
 
 var ws;
 var shi;
 
-function start(){
-      ws = new WebSocket('ws://'+document.location.host+'/ws',['arduino']);
+function start_websocket(){
+      ws = new WebSocket('ws://'+document.location.host+'/wsColorPicker',['arduino']);
       ws.onopen = function(e){
         console.log("Connected");
       };
@@ -962,8 +962,7 @@ function start(){
       ws.onmessage = function(e){
         console.log(e.data);
         var parts = e.data.split('&'); //afvangen niet splitbaar
-        var i=0;
-        while(parts[i] != ""){
+        for (i = 0; i < parts.length; i++){
             var mes = parts[i]
             console.log(mes);
             if(mes[0] == 'R'){
@@ -971,7 +970,6 @@ function start(){
               if(temp >= 0) picker.rgb[0] =temp; 
             }
             if(mes[0] == 'B'){
-
               var temp = parseInt(mes.substr(1,3));
               if(temp >= 0) picker.rgb[2] =temp; 
             }
@@ -992,9 +990,8 @@ function start(){
               var temp2 = temp.split(",");
               picker.updateClientList(temp2);
             }
-
-            i++;
         }
+
         picker.hex = picker.RGBtoHEX(picker.rgb[0],picker.rgb[1],picker.rgb[2]);
         picker.hsv = picker.RGBtoHSV(picker.rgb[0],picker.rgb[1],picker.rgb[2]);
         saturation = 1 - picker.hsv[2];
@@ -1020,8 +1017,10 @@ function onloadfunc() {
               }
             });
             saturation = 1 - picker.hsv[2];
+
             var scale = screen.width /siteWidth
             document.querySelector('meta[name="viewport"]').setAttribute('content', 'width='+siteWidth+', initial-scale='+scale+',maximum-scale=1.0, user-scalable=no');
+            
             nocache = "&nocache=" + Math.random() * 1000000;
             var xhttp = new XMLHttpRequest();
             xhttp.onreadystatechange = function () {
@@ -1080,7 +1079,7 @@ function onloadfunc() {
                 };
             xhttp.open("GET", "start?hi=hi" + nocache, true);
             xhttp.send();
-            start();
+            start_websocket();
         }
 </script>
 </body>
