@@ -4,6 +4,9 @@
     body {
         margin: 0;
     }
+    h1{
+        background-color: white;
+    }
     #mainsrc{
         position: fixed;
         width: 100%;
@@ -11,58 +14,48 @@
     }
     </style>
 <body onload="javascript:onload();" style="background-color:black;">
+
     <div id=mainsrc>
+        <h1>Debug press KEYS: (numlock 0-3 for animations) (rgbw for colors) (s for strobo)</h1>
+        <h1>Todo fix websocket and channel descriptions to control the site</h1>
     </div>
 </body>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
+    <script src="libs/p5_Phantom_town.js"></script>
 <script>
-
-//** OBJECTS **//
-var ws;                 //websocket object
-var Animations = []
-var Animation_speed     = 1000;
-var BlockAnimation_size = 50;
-var rgbw                = [0,255,0,0];
-var setstrobohard       = 0;
-
-// Resize screen option!
-$(window).bind('resize', function() {   
-    console.log("Resize screen");
-    element = document.getElementById('mainsrc');
-    positionInfo = element.getBoundingClientRect();
-    height = positionInfo.height;
-    width = positionInfo.width;
-    //blocksfunction!!
-    for(var i = 0; i< Animations.length; i++){
-        Animations[i].build(BlockAnimation_size)
-    }
-});
-
-//** Manage Strobo capabilities surpasses all animations and strobes the mainsrc! **//
-var strobe_hard_interval;
-var Strobo_onflag = 1;
-function strobohard(){
-    if(Strobo_onflag == 0){
-        Strobo_onflag = 1;
-        document.getElementById("mainsrc").style.display = "block";
-    }else{
-        Strobo_onflag = 0;
-        document.getElementById("mainsrc").style.display = "none";
-    }
-}
+//TODO
+// Fix speed channel
 
 
+//Classes
 class Block_Animation{
     dom = {}
-    rgbw = [0,255,0,0];
-    
-    //size == channel ??
-    constructor(element,size){
+    channels = [255,0,0,0,250,0,0,0]; // r g b w size  
+    Animation = function(){
+        for (var i = this.dom.Blocks.length; i > 0 ; i--) {
+            var block = this.dom.Blocks[i-1];
+            var saturation = Math.random();
+            var r = (saturation * this.channels[0]);
+            var g = (saturation * this.channels[1]);
+            var b = (saturation * this.channels[2]);
+            var w = (saturation * this.channels[3]);
+            if(w){
+                r = (w + this.rgbw[0]/2.56)%256;
+                g = (w + this.rgbw[1]/2.56)%256;
+                b = (w + this.rgbw[2]/2.56)%256;
+            }            
+            block.style.backgroundColor = 'rgb('+r+','+g+','+b+')';
+        }
+    }
+
+    constructor(element){
         this.dom = document.createElement('div');
-        this.dom.className = 'Block_Animation';
+        this.dom.id = 'Block_Animation';
         element.appendChild(this.dom);
         this.dom.style.width  =  '100%';
         this.dom.style.height =  '100%';
+        this.dom.style.position = 'absolute';
         this.dom.style.marginLeft   = 'auto';
         this.dom.style.marginRight  = 'auto';
         this.dom.style.marginTop    = 'auto';
@@ -73,32 +66,30 @@ class Block_Animation{
         this.dom.style.right = 0;
         this.dom.style.display = 'none';
         this.dom.Blocks = [];
-        this.build(size)
+        this.resize()
     }
-    
-    
-    build = function(size){
+    resize        = function(){
         //remove the blocks
         for (var i = this.dom.Blocks.length; i > 0 ; i--) {
             this.dom.Blocks[i-1].remove();
             this.dom.Blocks.splice(i-1,1);    
         }
         //Create the blocks
-        if(size){
+        if(this.channels[4]){
             var w =  $("#mainsrc").width();
             var h =  $("#mainsrc").height();
-            var nbW = Math.floor(w/size);
-            var nbH = Math.floor(h/size);
+            var nbW = Math.floor(w/this.channels[4]);
+            var nbH = Math.floor(h/this.channels[4]);
 
-            this.dom.style.width  =  size*nbW + 'px';
-            this.dom.style.height =  size*nbH + 'px';
+            this.dom.style.width  =  this.channels[4]*nbW + 'px';
+            this.dom.style.height =  this.channels[4]*nbH + 'px';
 
             for(var i=0;i<(nbW*nbH);i++){
                 var block = {}
                 block = document.createElement('div');
                 block.className    = 'Animation_block';                
-                block.style.width  =  String(size) + 'px'; 
-                block.style.height =  String(size) + 'px'; 
+                block.style.width  =  String(this.channels[4]) + 'px'; 
+                block.style.height =  String(this.channels[4]) + 'px'; 
                 block.style.float  =  'left';
                 block.style.webkitTransition = 'background-color 0.2s ease-in';
                 block.style.MozTransition    = 'background-color 0.2s ease-in';
@@ -121,31 +112,13 @@ class Block_Animation{
             this.dom.Blocks.push(block);
         }
     }
-    Animation = function(){
-        for (var i = this.dom.Blocks.length; i > 0 ; i--) {
-            var block = this.dom.Blocks[i-1];
-            var saturation = Math.random();
-            var r = (saturation * this.rgbw[0]);
-            var g = (saturation * this.rgbw[1]);
-            var b = (saturation * this.rgbw[2]);
-            var w = (saturation * this.rgbw[3]);
-            if(w){
-                r = (w + this.rgbw[0]/2.56)%256;
-                g = (w + this.rgbw[1]/2.56)%256;
-                b = (w + this.rgbw[2]/2.56)%256;
-            }            
-            block.style.backgroundColor = 'rgb('+r+','+g+','+b+')';
+    set_Channels  = function(set_channels){
+        for(var i = 0; i <set_channels.length; i++){
+            if(i > this.channels.length){break;}
+            this.channels[i] = set_channels[i];
         }
     }
-
-    
-    set_Channels = function(channels){
-        //todo check channels len
-        this.rgbw = [channels[0],channels[1],channels[2],channels[3]];
-        //do something with speed channels etc etc indelen 
-    }
-
-    setAnimotor = function(ClaSS,speed){
+    setAnimotor   = function(ClaSS,speed){
         this.dom.style.display = 'block';
         this.animotor =  setInterval(function(){ClaSS.Animation()},speed);
     }
@@ -156,39 +129,40 @@ class Block_Animation{
 }
 class The_Matrix{
     dom = {}  //canvas ?
-    rgbw = [0,255,0,0];
+    channels = [255,0,0,0,0,0,0,0]; // r g b w 
+    active   = false;
 
     constructor(element){
         this.dom = document.createElement('canvas');
-        this.dom.className = 'The_matrix';
-        this.dom.style.display = 'block';
+        this.dom.id = 'The_matrix';
+        this.dom.style.display = 'none';
         this.element = element;
         element.appendChild(this.dom);
-        this.build(null);
+        this.resize();
     }
 
-    build = function(arg1){
+    resize = function(){
         this.ctx                     = this.dom.getContext('2d');
         this.positionInfo            = this.element.getBoundingClientRect();
         this.dom.width               = this.positionInfo.width;
         this.dom.height              = this.positionInfo.height;
         this.ypos                    = Array(Math.floor(this.positionInfo.width / 20) + 1).fill(0);
-        console.log(this.dom.width)
     }
 
-    set_Channels = function(channels){
+    set_Channels = function(set_channels){
         //todo check channels len
-        this.rgbw = [channels[0],channels[1],channels[2],channels[3]];
-        //do something with speed channels etc etc indelen 
+        for(var i = 0; i <set_channels.length; i++){
+            if(i > this.channels.length){break;}
+            this.channels[i] = set_channels[i];
+        }
     }
-
     Animation = function(){
         this.ctx.fillStyle = '#0001';
         this.ctx.fillRect(0, 0, this.dom.width, this.dom.height);
-        var r = (this.rgbw[0]);
-        var g = (this.rgbw[1]);
-        var b = (this.rgbw[2]);
-        var w = (this.rgbw[3]);
+        var r = (this.channels[0]);
+        var g = (this.channels[1]);
+        var b = (this.channels[2]);
+        var w = (this.channels[3]);
         if(w){
             r = (w + this.rgbw[0]/2.56)%256;
             g = (w + this.rgbw[1]/2.56)%256;
@@ -204,7 +178,6 @@ class The_Matrix{
             else this.ypos[ind] = y + 20;
         });
     }
-
     setAnimotor = function(ClaSS,speed){
         this.dom.style.display = 'block';
         this.animotor =  setInterval(function(){ClaSS.Animation()},speed/8);
@@ -214,43 +187,101 @@ class The_Matrix{
         clearInterval(this.animotor);
     }
 }
+class p5_Phantom_town{
+    dom = {};
+    active = false;
+    channels = [0,0,0,0,0,0,0,0];
 
-class P5_test1{
+    constructor(element){
+        this.dom = document.createElement('div');
+        this.dom.id = "Phantom_town"
+        this.dom.style.display = "none";
+        element.appendChild(this.dom);
+        this.p5_hol_camp = new p5(Phantom_town,this.dom.id);
+    }
 
+    set_Channels = function(set_channels){
+        for(var i = 0; i <set_channels.length; i++){
+            if(i > this.channels.length){break;}
+            this.channels[i] = set_channels[i];
+        }
+        this.p5_hol_camp.settings(this.channels);
+    }
 
+    resize = function(){
+        console.log("todo");
+    }
 
+    setAnimotor = function(ClaSS,speed){
+        this.dom.style.display = 'block';
+        this.p5_hol_camp.play(speed);
+        this.active = true;
+    }
+    clearAnimotor = function(speed){
+        this.dom.style.display = 'none';
+        this.active = false;
+        this.p5_hol_camp.pause();
+    }
 }
 
-Animations.push( new Block_Animation(document.getElementById('mainsrc'),BlockAnimation_size))
+
+//** OBJECTS **//
+var ws;                           //websocket object
+
+//** Animations (new class ?) **//
+var Animations = []
+function update_animotions_channels(Channels){
+    for(var i = 0; i< Animations.length; i++){
+        Animations[i].set_Channels(Channels);
+    }
+}
+function Clear_animotors(){
+    for(var i = 0; i< Animations.length; i++){
+        Animations[i].clearAnimotor();
+    }
+}
+
+Animations.push( new Block_Animation(document.getElementById('mainsrc')))
 Animations.push( new The_Matrix(document.getElementById('mainsrc')))
+Animations.push( new p5_Phantom_town(document.getElementById('mainsrc')))
 
-// Animations[0].setAnimotor(Animations[0],Animation_speed);
-
-
+//** Manage Strobo capabilities surpasses all animations and strobes the mainsrc! **//
+var set_strobo = 0;
+var strobo_interval;
+function strobohard(){
+    if(document.getElementById("mainsrc").style.display == "none"){
+        document.getElementById("mainsrc").style.display = "block";
+    }else{
+        document.getElementById("mainsrc").style.display = "none";
+    }
+}
 
 //DEBUGGING
 $(window).keyup(function(e){
-    if     (e.which==82){rgbw = [255,0,0,0];}      //r = RED
-    else if(e.which==71){rgbw = [0,255,0,0];}      //g = Green
-    else if(e.which==66){rgbw = [0,0,255,0];}      //b = Blue
-    else if(e.which==87){rgbw = [0,0,0,255];}      //b = Blue
+    if     (e.which==82){update_animotions_channels([255,0  ,0  ,0  ])}      //r = RED
+    else if(e.which==71){update_animotions_channels([0  ,255,0  ,0  ])}      //g = Green
+    else if(e.which==66){update_animotions_channels([0  ,0  ,255,0  ])}      //b = Blue
+    else if(e.which==87){update_animotions_channels([0  ,0  ,0  ,255])}      //w = White
+    else if(e.which==96){Clear_animotors();}                                                    //num0 = clear
+    else if(e.which==97){Clear_animotors(); Animations[0].setAnimotor(Animations[0],1000)}      //num1 = Blocks
+    else if(e.which==98){Clear_animotors(); Animations[1].setAnimotor(Animations[1],1000)}      //num2 = The matrix
+    else if(e.which==99){Clear_animotors(); Animations[2].setAnimotor(Animations[2],0.0001)}    //num3 = PhantomTwon
     else if(e.which==83){
-        if(setstrobohard){
-            setstrobohard = 0;
+        if(set_strobo){
+            set_strobo = 0;
         }else{
-            setstrobohard = 100;
+            set_strobo = 125;
         }
-        clearInterval(strobe_hard_interval);
+        clearInterval(strobo_interval);
         document.getElementById("mainsrc").style.display = "block";
-        if(setstrobohard > 0){    
-            strobe_hard_interval = setInterval(strobohard, (1000)/((setstrobohard) / 2.55));
+        if(set_strobo > 0){    
+            strobo_interval = setInterval(strobohard, (1000)/((set_strobo) / 2.55));
         }
     }
     else{
         console.log("unknown KEY: " + e.which);
     }
 });
-
 
 //TODO
 function start_websocket(){
@@ -270,50 +301,26 @@ function start_websocket(){
         for (i = 0; i < parts.length; i++){
             var mes = parts[i].split(',')
             console.log(mes);
-            if(mes[0] == '0'){
-                setred = parseInt(mes[1]);
-            }
-            if(mes[0] == '1'){
-                setgreen = parseInt(mes[1]);
-            }
-            
-            if(mes[0] == '2'){
-                setblue = parseInt(mes[1]);
-            }
-
-            if(mes[0] == '3'){
-                setwhite = parseInt(mes[1]);
-            }
-            
-            if(mes[0] == '4'){
-                setstrobohard = parseInt(mes[1]);
-                clearInterval(strobe_hard_interval);
-                document.getElementById("mainsrc").style.display = "block";
-                if(setstrobohard > 0){    
-                    strobe_hard_interval = setInterval(strobohard, (1000)/((setstrobohard) / 2.55));
-                }
-            }
-            //fixen JA
-            if(mes[0] == 'O'){
-                setsize = parseInt(mes[1]);
-                $('.Blocks_animation').remove();
-                build(setsize);
-            }
-            if(mes[0] == 'I'){
-                Animation_speed = parseInt(mes[1]);
-                clearInterval(si);
-                if(Animation_speed > 0){    
-                    si = setInterval(Blocks_animation, ((100000)/(Animation_speed) / 2.55));
-                }
-            }
         }
-        hexrgb = fullColorHex(setred,setgreen,setblue);
-      };
-    
+      };    
 }
-//** ONLOAD FUNCTION **//
+
+//--> Resize screen option!
+$(window).bind('resize', function() {   
+    console.log("Resize screen");
+    element = document.getElementById('mainsrc');
+    positionInfo = element.getBoundingClientRect();
+    height = positionInfo.height;
+    width = positionInfo.width;
+    //blocksfunction!!
+    for(var i = 0; i< Animations.length; i++){
+        Animations[i].resize()
+    }
+});
+//--> ONLOAD FUNCTION 
 function onload(){
-    start_websocket();
+    // start_websocket();
+    update_animotions_channels([150,50,50,0]);
 }
 
 </script>

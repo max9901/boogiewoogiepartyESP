@@ -218,7 +218,7 @@
                 }
             };
         }
-
+        
         var buttonboard;
         var ClientBoard;
 
@@ -227,18 +227,16 @@
             var scale = screen.width /siteWidth
             document.querySelector('meta[name="viewport"]').setAttribute('content', 'width='+siteWidth+', initial-scale='+scale+',maximum-scale=2.0, user-scalable=no');
             
-
             buttonboard = new ButtonboardClass(document.getElementById('buttonboard'));
             buttonboard.addButton_unique('strobe'    ,btn_stobo);
-            buttonboard.addButton       ('red'       ,function() {console.log("red");      SubmitBroadcast("0,255&1,0&2,0&3,0")       });
-            buttonboard.addButton       ('green'     ,function() {console.log("green");    SubmitBroadcast("0,0&1,255&2,0&3,0")       });
-            buttonboard.addButton       ('blue'      ,function() {console.log("blue");     SubmitBroadcast("0,0&1,0&2,255&3,0")       });
-            buttonboard.addButton       ('full on'   ,function() {console.log("Full on");  SubmitBroadcast("0,0&1,0&2,0&3,255")       });
-            buttonboard.addButton       ('black out' ,function() {console.log("Black out");SubmitBroadcast("0,0&1,0&2,0&3,0")         });
-            buttonboard.addButton       ('OFF'       ,function() {console.log("Black out");SubmitBroadcast("0,0&1,0&2,0&3,0&4,0&5,0&6,0&7,0")         });
+            buttonboard.addButton       ('red'       ,function() {console.log("red");      SubmitBroadcast("0,255&1,0&2,0&3,0")               });
+            buttonboard.addButton       ('green'     ,function() {console.log("green");    SubmitBroadcast("0,0&1,255&2,0&3,0")               });
+            buttonboard.addButton       ('blue'      ,function() {console.log("blue");     SubmitBroadcast("0,0&1,0&2,255&3,0")               });
+            buttonboard.addButton       ('full on'   ,function() {console.log("Full on");  SubmitBroadcast("0,0&1,0&2,0&3,255")               });
+            buttonboard.addButton       ('black out' ,function() {console.log("Black out");SubmitBroadcast("0,0&1,0&2,0&3,0")                 });
+            buttonboard.addButton       ('OFF'       ,function() {console.log("Black out");SubmitBroadcast("0,0&1,0&2,0&3,0&4,0&5,0&6,0&7,0") });
 
             ClientBoard = new ClientListClass(document.getElementById('ClientBoard'));
-            
             start_websocket();
 
         } 
