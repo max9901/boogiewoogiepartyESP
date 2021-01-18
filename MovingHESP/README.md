@@ -10,11 +10,11 @@ STL files can be found under the STL subdirectory from each version. These are o
 ### Current design
 
 #### Front
-![front](MovingHESP/CAD/V2/front.png)
+![front](CAD/V2/front.png)
 #### Back
-![back](MovingHESP/CAD/V2/back.png)
+![back](CAD/V2/back.png)
 #### Mount
-![mount](MovingHESP/CAD/V2/with_mount.png)
+![mount](CAD/V2/with_mount.png)
 
 ### part list
 
