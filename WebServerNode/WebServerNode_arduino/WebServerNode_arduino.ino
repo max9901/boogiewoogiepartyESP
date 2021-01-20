@@ -1,8 +1,8 @@
 #include "painlessMesh.h"
 #include "PubSubClient.h"
+#include <ESPAsyncWebServer.h>
 //Change to your full Path
 #include "/home/max/boogiewoogiepartyESP/passwords.h"
-
 #ifdef ESP8266
   #include "Hash.h"
   #include <FS.h>
@@ -11,8 +11,6 @@
   #include <AsyncTCP.h>
   #include <SPIFFS.h>
 #endif
-#include <ESPAsyncWebServer.h>
-
 
 #define   DEBUG         1
 #define   ROLE          "WebBridge"
@@ -83,12 +81,14 @@ void sendoverclientlist(){
 void receivedCallback( const uint32_t &from, const String &msg ) {
     // Channels inbouwen voor de websockets ??
     Serial.printf("bridge: Received from %u msg=%s\n", from, msg.c_str());
-    ws_ColorPicker.textAll(msg);
+    ws_Animation.textAll(msg);
     char buf[msg.length() + 1];
     msg.toCharArray(buf, sizeof(buf));
     Serial.println(buf);
     char *p = buf;
     char *str;
+    // TODO
+    ws_Animation.textAll(msg);
     while ((str = strtok_r(p, "&", &p)) != NULL){
       Serial.println(str);
       Serial.println("TODO");
@@ -145,7 +145,6 @@ void sendHeartBEAT() {
   Serial.printf("Sending message: %s\n", msg.c_str());
   taskSendMessage.setInterval( random(TASK_SECOND * 5, TASK_SECOND * 10)); // between 1 and 5 seconds
 }
-
 
 //Web functions
 void notFound(AsyncWebServerRequest *request) {
@@ -250,6 +249,10 @@ void setup(){
       Serial.println("INFO: Clientlist.js requested"); 
       request->send(SPIFFS, "/libs/ClientList.js", String(), false);
     });
+  server.on("/libs/p5_Phantom_town.js", HTTP_GET, [](AsyncWebServerRequest *request){
+      Serial.println("INFO: p5_Phantom_town.js requested"); 
+      request->send(SPIFFS, "/libs/p5_Phantom_town.js", String(), false);
+    });
   
 
   // Callback functions
@@ -286,9 +289,9 @@ void setup(){
        AsyncWebServerResponse *response = request->beginResponse(200);
       request->send(response);
   });
+      //color picker TODO
   server.on("/setRGB", HTTP_GET, [](AsyncWebServerRequest *request)
     {
-      
       //Saperate Colors are sent through javascript
       String red = request->arg("r");
       String green = request->arg("g");
@@ -306,13 +309,15 @@ void setup(){
             Serial.println(temp);
             if(temp == "All"){
                 mesh.sendBroadcast(msg);
-                ws_Animation.textAll("R" + red + "&G" + green + "&B" + blue + "&W" + white + "&S"  + strobo + "&");
+                //todo
+                ws_Animation.textAll(msg);
             }
             else{
               //todo error afhandeling.
               if(temp[0] == 'W'){
                 String Temp2 = temp.substring(1);
                 Serial.println(Temp2);
+                //todo
                 ws_Animation.text(strtoul(Temp2.c_str(),NULL,10), msg);
               }else{
                 mesh.sendSingle(strtoul(temp.c_str(),NULL,10), msg); 
@@ -327,7 +332,7 @@ void setup(){
             if(temp == "All"){
                 Serial.print("broadcast");
                 mesh.sendBroadcast(msg);
-                ws_Animation.textAll("R" + red + "&G" + green + "&B" + blue + "&W" + white + "&S"  + strobo + "&");
+                ws_Animation.textAll(msg);
             }
             else{
               if(temp[0] == 'W'){
@@ -345,7 +350,7 @@ void setup(){
       response->addHeader("Test-Header", "My header value");
       request->send(response);
     });
-
+      //main
   server.on("/BROADCAST", HTTP_GET, [](AsyncWebServerRequest *request){   
       if (request->hasArg("BROADCAST")){
         String msg = request->arg("BROADCAST");
@@ -370,6 +375,7 @@ void setup(){
 
     });
 
+  //painlessmesh functions for network analysis
   server.on("/map", HTTP_GET, [](AsyncWebServerRequest *request)
     {
     request->send_P(200, "text/html", "<html><head><script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.js'></script><link href='https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.css' rel='stylesheet' type='text/css' /><style type='text/css'>#mynetwork {width: 1024px;height: 768px;border: 1px solid lightgray;}</style></head><body><h1>PainlessMesh Network Map</h1><div id='mynetwork'></div><a href=https://visjs.org>Made with vis.js<img src='http://www.davidefabbri.net/files/visjs_logo.png' width=40 height=40></a><script>var txt = '%SCAN%';</script><script type='text/javascript' src='http://www.davidefabbri.net/files/painlessmeshmap.js'></script></body></html>", scanprocessor );

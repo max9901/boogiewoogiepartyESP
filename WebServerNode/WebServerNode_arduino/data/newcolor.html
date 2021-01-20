@@ -28,9 +28,14 @@
 
 
 //Classes
+
+//Channels 1 2 3 4 --> inUSE ATM rgbw
 class Block_Animation{
     dom = {}
+    //Channels 1 2 3 4 --> inUSE ATM
     channels = [255,0,0,0,250,0,0,0]; // r g b w size  
+    size = 250;
+
     Animation = function(){
         for (var i = this.dom.Blocks.length; i > 0 ; i--) {
             var block = this.dom.Blocks[i-1];
@@ -40,9 +45,9 @@ class Block_Animation{
             var b = (saturation * this.channels[2]);
             var w = (saturation * this.channels[3]);
             if(w){
-                r = (w + this.rgbw[0]/2.56)%256;
-                g = (w + this.rgbw[1]/2.56)%256;
-                b = (w + this.rgbw[2]/2.56)%256;
+                r = (w + this.channels[0]/2.56)%256;
+                g = (w + this.channels[1]/2.56)%256;
+                b = (w + this.channels[2]/2.56)%256;
             }            
             block.style.backgroundColor = 'rgb('+r+','+g+','+b+')';
         }
@@ -74,21 +79,21 @@ class Block_Animation{
             this.dom.Blocks.splice(i-1,1);    
         }
         //Create the blocks
-        if(this.channels[4]){
+        if(this.size){
             var w =  document.getElementById('mainsrc').clientWidth;
             var h =  document.getElementById('mainsrc').clientHeight;
-            var nbW = Math.floor(w/this.channels[4]);
-            var nbH = Math.floor(h/this.channels[4]);
+            var nbW = Math.floor(w/this.size);
+            var nbH = Math.floor(h/this.size);
 
-            this.dom.style.width  =  this.channels[4]*nbW + 'px';
-            this.dom.style.height =  this.channels[4]*nbH + 'px';
+            this.dom.style.width  =  this.size*nbW + 'px';
+            this.dom.style.height =  this.size*nbH + 'px';
 
             for(var i=0;i<(nbW*nbH);i++){
                 var block = {}
                 block = document.createElement('div');
                 block.className    = 'Animation_block';                
-                block.style.width  =  String(this.channels[4]) + 'px'; 
-                block.style.height =  String(this.channels[4]) + 'px'; 
+                block.style.width  =  String(this.size) + 'px'; 
+                block.style.height =  String(this.size) + 'px'; 
                 block.style.float  =  'left';
                 block.style.webkitTransition = 'background-color 0.2s ease-in';
                 block.style.MozTransition    = 'background-color 0.2s ease-in';
@@ -126,6 +131,8 @@ class Block_Animation{
         clearInterval(this.animotor);
     }
 }
+
+//Channels 1 2 3 4 --> inUSE ATM rgbw
 class The_Matrix{
     dom = {}  //canvas ?
     channels = [255,0,0,0,0,0,0,0]; // r g b w 
@@ -150,6 +157,7 @@ class The_Matrix{
 
     set_Channels = function(set_channels){
         //todo check channels len
+        
         for(var i = 0; i <set_channels.length; i++){
             if(i > this.channels.length){break;}
             this.channels[i] = set_channels[i];
@@ -163,9 +171,9 @@ class The_Matrix{
         var b = (this.channels[2]);
         var w = (this.channels[3]);
         if(w){
-            r = (w + this.rgbw[0]/2.56)%256;
-            g = (w + this.rgbw[1]/2.56)%256;
-            b = (w + this.rgbw[2]/2.56)%256;
+            r = (w + this.channels[0]/2.56)%256;
+            g = (w + this.channels[1]/2.56)%256;
+            b = (w + this.channels[2]/2.56)%256;
         }         
         this.ctx.fillStyle = 'rgb('+r+','+g+','+b+')';
         this.ctx.font = '15pt monospace';
@@ -186,6 +194,8 @@ class The_Matrix{
         clearInterval(this.animotor);
     }
 }
+
+//Channels 1 2 3 --> inUSE ATM rgb
 class p5_Phantom_town{
     dom = {};
     active = false;
@@ -204,6 +214,7 @@ class p5_Phantom_town{
             if(i > this.channels.length){break;}
             this.channels[i] = set_channels[i];
         }
+        console.log(this.channels);
         this.p5_hol_camp.settings(this.channels);
     }
 
@@ -223,13 +234,13 @@ class p5_Phantom_town{
     }
 }
 
-
 //** OBJECTS **//
 var ws;                           //websocket object
 
 //** Animations (new class ?) **//
 var Animations = []
 function update_animotions_channels(Channels){
+    console.log(Channels);
     for(var i = 0; i< Animations.length; i++){
         Animations[i].set_Channels(Channels);
     }
@@ -284,7 +295,9 @@ document.onkeyup = function (e) {
 
 //TODO
 function start_websocket(){
-      ws = new WebSocket('ws://'+document.location.host+'/wsa',['arduino']);
+        ws = new WebSocket('ws://'+document.location.host+'/wsa',['arduino']);
+    //   ws = new WebSocket('ws://192.168.2.18/wsa',['arduino']);
+
       ws.onopen = function(e){
         console.log("Connected");
       };
@@ -296,11 +309,15 @@ function start_websocket(){
       };
       ws.onmessage = function(e){
         console.log(e.data);
-        var parts = e.data.split('&'); //afvangen niet splitbaar
+        var Channels = [0,0,0,0,0,0,0,0];
+        var parts = e.data.split('&');          //afvangen niet splitbaar
         for (i = 0; i < parts.length; i++){
             var mes = parts[i].split(',')
-            console.log(mes);
+            if(mes.length == 2){
+                Channels[mes[0]] = mes[1];
+            }
         }
+        update_animotions_channels(Channels)
       };    
 }
 
@@ -319,7 +336,7 @@ window.addEventListener('resize', function() {
 
 //--> ONLOAD FUNCTION 
 function onload(){
-    // start_websocket();
+    start_websocket();
     update_animotions_channels([150,50,50,0]);
 }
 

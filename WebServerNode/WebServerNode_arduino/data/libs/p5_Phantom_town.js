@@ -1,7 +1,7 @@
 var Phantom_town = function(p5func) {
-    let red = 50
+    let red = 255
     let green = 0
-    let blue = 50
+    let blue = 0
     
     let speed = 0.00002
     let a = 0.9
@@ -12,10 +12,11 @@ var Phantom_town = function(p5func) {
 
 
     p5func.settings = function(channels){
-        red   = channels[0];
-        green = channels[1];
-        blue  = channels[2];
-        white = channels[3];
+        red   = channels[0]/2;
+        green = channels[1]/2;
+        blue  = channels[2]/2;
+        // white = channels[3];
+        console.log(channels);
         // a     = channels[4];
         // b     = channels[5];
         // c     = channels[6];
