@@ -1,6 +1,6 @@
-//#include <Arduino.h>
 #include "painlessMesh.h"
 #include "PubSubClient.h"
+//Change to your full Path
 #include "/home/max/boogiewoogiepartyESP/passwords.h"
 
 #ifdef ESP8266

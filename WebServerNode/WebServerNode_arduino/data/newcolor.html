@@ -20,7 +20,6 @@
         <h1>Todo fix websocket and channel descriptions to control the site</h1>
     </div>
 </body>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
     <script src="libs/p5_Phantom_town.js"></script>
 <script>
@@ -76,8 +75,8 @@ class Block_Animation{
         }
         //Create the blocks
         if(this.channels[4]){
-            var w =  $("#mainsrc").width();
-            var h =  $("#mainsrc").height();
+            var w =  document.getElementById('mainsrc').clientWidth;
+            var h =  document.getElementById('mainsrc').clientHeight;
             var nbW = Math.floor(w/this.channels[4]);
             var nbH = Math.floor(h/this.channels[4]);
 
@@ -257,7 +256,7 @@ function strobohard(){
 }
 
 //DEBUGGING
-$(window).keyup(function(e){
+document.onkeyup = function (e) {
     if     (e.which==82){update_animotions_channels([255,0  ,0  ,0  ])}      //r = RED
     else if(e.which==71){update_animotions_channels([0  ,255,0  ,0  ])}      //g = Green
     else if(e.which==66){update_animotions_channels([0  ,0  ,255,0  ])}      //b = Blue
@@ -270,7 +269,7 @@ $(window).keyup(function(e){
         if(set_strobo){
             set_strobo = 0;
         }else{
-            set_strobo = 125;
+            set_strobo = 75;
         }
         clearInterval(strobo_interval);
         document.getElementById("mainsrc").style.display = "block";
@@ -281,7 +280,7 @@ $(window).keyup(function(e){
     else{
         console.log("unknown KEY: " + e.which);
     }
-});
+};
 
 //TODO
 function start_websocket(){
@@ -305,8 +304,8 @@ function start_websocket(){
       };    
 }
 
-//--> Resize screen option!
-$(window).bind('resize', function() {   
+
+window.addEventListener('resize', function() {   
     console.log("Resize screen");
     element = document.getElementById('mainsrc');
     positionInfo = element.getBoundingClientRect();
@@ -317,6 +316,7 @@ $(window).bind('resize', function() {
         Animations[i].resize()
     }
 });
+
 //--> ONLOAD FUNCTION 
 function onload(){
     // start_websocket();
