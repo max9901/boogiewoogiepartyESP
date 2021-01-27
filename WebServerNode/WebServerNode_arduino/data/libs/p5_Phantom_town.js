@@ -1,3 +1,44 @@
+//Channels 1 2 3 --> inUSE ATM rgb
+class p5_Phantom_town{
+    dom = {};
+    active = false;
+    channels = [NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN];
+
+    constructor(element){
+        this.dom = document.createElement('div');
+        this.dom.id = "Phantom_town"
+        this.dom.style.display = "none";
+        element.appendChild(this.dom);
+        this.p5_hol_camp = new p5(Phantom_town,this.dom.id);
+    }
+
+    set_Channels = function(set_channels){
+        for(var i = 0; i <set_channels.length; i++){
+            if(i > this.channels.length){break;}
+            if(!isNaN(set_channels[i])){
+                this.channels[i] = +set_channels[i];
+            }
+        }
+        this.p5_hol_camp.settings(this.channels);
+    }
+
+    resize = function(){
+        console.log("todo");
+    }
+
+    setAnimotor = function(ClaSS,speed){
+        this.dom.style.display = 'block';
+        this.p5_hol_camp.play(speed);
+        this.active = true;
+    }
+    clearAnimotor = function(speed){
+        this.dom.style.display = 'none';
+        this.active = false;
+        this.p5_hol_camp.pause();
+    }
+}
+
+//P5 functionality
 var Phantom_town = function(p5func) {
     let red = 255
     let green = 0
@@ -16,7 +57,8 @@ var Phantom_town = function(p5func) {
         green = channels[1]/2;
         blue  = channels[2]/2;
         // white = channels[3];
-        console.log(channels);
+
+        // console.log(channels);
         // a     = channels[4];
         // b     = channels[5];
         // c     = channels[6];
@@ -52,7 +94,10 @@ var Phantom_town = function(p5func) {
     };
 
     p5func.draw = function() {
-        p5func.background(100+red,100+green,100+blue, 40)
+        // p5func.background(100+red,100+green,100+blue, 40)
+        p5func.background(25,5);
+        p5func.background(50, 40)
+        p5func.stroke(25+red,25+green,25+blue)
         p5func.spiral(width/2, height/2,a,b,speed)
     };
     

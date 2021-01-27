@@ -41,20 +41,20 @@ channel[7] = fade_setting
 #define   HOSTNAME        "PAR"
 
 /*** BLACK MAGIC PAR ***/
-#define ROLE "paresp01"
-const uint16_t PixelCount = 39;
-const uint8_t PixelPin = 4;  
-NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip(PixelCount, PixelPin);
-#define RGB 1
-#define RGBW 0
+// #define ROLE "paresp01"
+// const uint16_t PixelCount = 39;
+// const uint8_t PixelPin = 4;  
+// NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip(PixelCount, PixelPin);
+// #define RGB 1
+// #define RGBW 0
 
 /*** WC DUMP par ***/
-// #define ROLE "parwc"
-// const uint16_t PixelCount = 12; 
-// const uint8_t PixelPin = D4;  
-// NeoPixelBus<NeoGrbwFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
-// #define RGB 0
-// #define RGBW 1
+#define ROLE "parwc"
+const uint16_t PixelCount = 12; 
+const uint8_t PixelPin = D4;  
+NeoPixelBus<NeoGrbwFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
+#define RGB 0
+#define RGBW 1
 
 // class declarations
 const uint8_t AnimationChannels = 1;            //we only need one as all the pixels are animated at once

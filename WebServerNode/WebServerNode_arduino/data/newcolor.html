@@ -16,231 +16,24 @@
 <body onload="javascript:onload();" style="background-color:black;">
 
     <div id=mainsrc>
-        <h1>Debug press KEYS: (numlock 0-3 for animations) (rgbw for colors) (s for strobo)</h1>
-        <h1>Todo fix websocket and channel descriptions to control the site</h1>
+        <!-- <h1>Debug press KEYS: (numlock 0-3 for animations) (rgbw for colors) (s for strobo)</h1>
+        <h1>Todo fix websocket and channel descriptions to control the site</h1> -->
     </div>
 </body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.7.3/p5.min.js"></script>
     <script src="libs/p5_Phantom_town.js"></script>
+    <script src="libs/p5_hol_camp.js"></script>
+    <!-- <script src="libs/p5_full_knee.js"></script> -->
+    <script src="libs/p5_an1.js"></script>
+    <script src="libs/p5_circler.js"></script>
+    <script src="libs/Animations.js"></script>
 <script>
 //TODO
 // Fix speed channel
 
-
-//Classes
-
-//Channels 1 2 3 4 --> inUSE ATM rgbw
-class Block_Animation{
-    dom = {}
-    //Channels 1 2 3 4 --> inUSE ATM
-    channels = [255,0,0,0,250,0,0,0]; // r g b w size  
-    size = 250;
-
-    Animation = function(){
-        for (var i = this.dom.Blocks.length; i > 0 ; i--) {
-            var block = this.dom.Blocks[i-1];
-            var saturation = Math.random();
-            var r = (saturation * this.channels[0]);
-            var g = (saturation * this.channels[1]);
-            var b = (saturation * this.channels[2]);
-            var w = (saturation * this.channels[3]);
-            if(w){
-                r = (w + this.channels[0]/2.56)%256;
-                g = (w + this.channels[1]/2.56)%256;
-                b = (w + this.channels[2]/2.56)%256;
-            }            
-            block.style.backgroundColor = 'rgb('+r+','+g+','+b+')';
-        }
-    }
-
-    constructor(element){
-        this.dom = document.createElement('div');
-        this.dom.id = 'Block_Animation';
-        element.appendChild(this.dom);
-        this.dom.style.width  =  '100%';
-        this.dom.style.height =  '100%';
-        this.dom.style.position = 'absolute';
-        this.dom.style.marginLeft   = 'auto';
-        this.dom.style.marginRight  = 'auto';
-        this.dom.style.marginTop    = 'auto';
-        this.dom.style.marginBottom = 'auto';
-        this.dom.style.top = 0; 
-        this.dom.style.bottom = 0;
-        this.dom.style.left = 0;
-        this.dom.style.right = 0;
-        this.dom.style.display = 'none';
-        this.dom.Blocks = [];
-        this.resize()
-    }
-    resize        = function(){
-        //remove the blocks
-        for (var i = this.dom.Blocks.length; i > 0 ; i--) {
-            this.dom.Blocks[i-1].remove();
-            this.dom.Blocks.splice(i-1,1);    
-        }
-        //Create the blocks
-        if(this.size){
-            var w =  document.getElementById('mainsrc').clientWidth;
-            var h =  document.getElementById('mainsrc').clientHeight;
-            var nbW = Math.floor(w/this.size);
-            var nbH = Math.floor(h/this.size);
-
-            this.dom.style.width  =  this.size*nbW + 'px';
-            this.dom.style.height =  this.size*nbH + 'px';
-
-            for(var i=0;i<(nbW*nbH);i++){
-                var block = {}
-                block = document.createElement('div');
-                block.className    = 'Animation_block';                
-                block.style.width  =  String(this.size) + 'px'; 
-                block.style.height =  String(this.size) + 'px'; 
-                block.style.float  =  'left';
-                block.style.webkitTransition = 'background-color 0.2s ease-in';
-                block.style.MozTransition    = 'background-color 0.2s ease-in';
-                block.style.msTransition     = 'background-color 0.2s ease-in';
-                block.style.OTransition      = 'background-color 0.2s ease-in';
-                this.dom.appendChild(block);
-                this.dom.Blocks.push(block);
-            }
-        }
-        else {
-            //todo
-            this.dom.style.width  =  '100%';
-            this.dom.style.height =  '100%';
-            var block = {}
-            block = document.createElement('div');
-            block.className = 'Animation_block';                
-            block.style.width =  '100%'; 
-            block.style.height = '100%'; 
-            this.dom.appendChild(block);
-            this.dom.Blocks.push(block);
-        }
-    }
-    set_Channels  = function(set_channels){
-        for(var i = 0; i <set_channels.length; i++){
-            if(i > this.channels.length){break;}
-            this.channels[i] = set_channels[i];
-        }
-    }
-    setAnimotor   = function(ClaSS,speed){
-        this.dom.style.display = 'block';
-        this.animotor =  setInterval(function(){ClaSS.Animation()},speed);
-    }
-    clearAnimotor = function(){
-        this.dom.style.display = 'none';
-        clearInterval(this.animotor);
-    }
-}
-
-//Channels 1 2 3 4 --> inUSE ATM rgbw
-class The_Matrix{
-    dom = {}  //canvas ?
-    channels = [255,0,0,0,0,0,0,0]; // r g b w 
-    active   = false;
-
-    constructor(element){
-        this.dom = document.createElement('canvas');
-        this.dom.id = 'The_matrix';
-        this.dom.style.display = 'none';
-        this.element = element;
-        element.appendChild(this.dom);
-        this.resize();
-    }
-
-    resize = function(){
-        this.ctx                     = this.dom.getContext('2d');
-        this.positionInfo            = this.element.getBoundingClientRect();
-        this.dom.width               = this.positionInfo.width;
-        this.dom.height              = this.positionInfo.height;
-        this.ypos                    = Array(Math.floor(this.positionInfo.width / 20) + 1).fill(0);
-    }
-
-    set_Channels = function(set_channels){
-        //todo check channels len
-        
-        for(var i = 0; i <set_channels.length; i++){
-            if(i > this.channels.length){break;}
-            this.channels[i] = set_channels[i];
-        }
-    }
-    Animation = function(){
-        this.ctx.fillStyle = '#0001';
-        this.ctx.fillRect(0, 0, this.dom.width, this.dom.height);
-        var r = (this.channels[0]);
-        var g = (this.channels[1]);
-        var b = (this.channels[2]);
-        var w = (this.channels[3]);
-        if(w){
-            r = (w + this.channels[0]/2.56)%256;
-            g = (w + this.channels[1]/2.56)%256;
-            b = (w + this.channels[2]/2.56)%256;
-        }         
-        this.ctx.fillStyle = 'rgb('+r+','+g+','+b+')';
-        this.ctx.font = '15pt monospace';
-        this.ypos.forEach((y, ind) => {
-            const text = String.fromCharCode(Math.random() * 128);
-            const x = ind * 20;
-            this.ctx.fillText(text, x, y);
-            if (y > 100 + Math.random() * 10000) this.ypos[ind] = 0;
-            else this.ypos[ind] = y + 20;
-        });
-    }
-    setAnimotor = function(ClaSS,speed){
-        this.dom.style.display = 'block';
-        this.animotor =  setInterval(function(){ClaSS.Animation()},speed/8);
-    }
-    clearAnimotor = function(){
-        this.dom.style.display = 'none';
-        clearInterval(this.animotor);
-    }
-}
-
-//Channels 1 2 3 --> inUSE ATM rgb
-class p5_Phantom_town{
-    dom = {};
-    active = false;
-    channels = [0,0,0,0,0,0,0,0];
-
-    constructor(element){
-        this.dom = document.createElement('div');
-        this.dom.id = "Phantom_town"
-        this.dom.style.display = "none";
-        element.appendChild(this.dom);
-        this.p5_hol_camp = new p5(Phantom_town,this.dom.id);
-    }
-
-    set_Channels = function(set_channels){
-        for(var i = 0; i <set_channels.length; i++){
-            if(i > this.channels.length){break;}
-            this.channels[i] = set_channels[i];
-        }
-        console.log(this.channels);
-        this.p5_hol_camp.settings(this.channels);
-    }
-
-    resize = function(){
-        console.log("todo");
-    }
-
-    setAnimotor = function(ClaSS,speed){
-        this.dom.style.display = 'block';
-        this.p5_hol_camp.play(speed);
-        this.active = true;
-    }
-    clearAnimotor = function(speed){
-        this.dom.style.display = 'none';
-        this.active = false;
-        this.p5_hol_camp.pause();
-    }
-}
-
-//** OBJECTS **//
-var ws;                           //websocket object
-
-//** Animations (new class ?) **//
+//** Animations **//
 var Animations = []
 function update_animotions_channels(Channels){
-    console.log(Channels);
     for(var i = 0; i< Animations.length; i++){
         Animations[i].set_Channels(Channels);
     }
@@ -250,10 +43,20 @@ function Clear_animotors(){
         Animations[i].clearAnimotor();
     }
 }
+function Resize_animations(){
+    for(var i = 0; i< Animations.length; i++){
+        Animations[i].resize()
+    }
+}
+
 
 Animations.push( new Block_Animation(document.getElementById('mainsrc')))
 Animations.push( new The_Matrix(document.getElementById('mainsrc')))
 Animations.push( new p5_Phantom_town(document.getElementById('mainsrc')))
+Animations.push( new p5_hol_camp(document.getElementById('mainsrc')))
+Animations.push( new p5_an1(document.getElementById('mainsrc')))
+Animations.push( new p5_circler(document.getElementById('mainsrc')))
+
 
 //** Manage Strobo capabilities surpasses all animations and strobes the mainsrc! **//
 var set_strobo = 0;
@@ -266,16 +69,19 @@ function strobohard(){
     }
 }
 
-//DEBUGGING
+//DEBUGGING and keyboard input
 document.onkeyup = function (e) {
-    if     (e.which==82){update_animotions_channels([255,0  ,0  ,0  ])}      //r = RED
-    else if(e.which==71){update_animotions_channels([0  ,255,0  ,0  ])}      //g = Green
-    else if(e.which==66){update_animotions_channels([0  ,0  ,255,0  ])}      //b = Blue
-    else if(e.which==87){update_animotions_channels([0  ,0  ,0  ,255])}      //w = White
-    else if(e.which==96){Clear_animotors();}                                                    //num0 = clear
-    else if(e.which==97){Clear_animotors(); Animations[0].setAnimotor(Animations[0],1000)}      //num1 = Blocks
-    else if(e.which==98){Clear_animotors(); Animations[1].setAnimotor(Animations[1],1000)}      //num2 = The matrix
-    else if(e.which==99){Clear_animotors(); Animations[2].setAnimotor(Animations[2],0.0001)}    //num3 = PhantomTwon
+    if     (e.which==82) {update_animotions_channels([255,0  ,0  ,0  ])}      //r = RED
+    else if(e.which==71) {update_animotions_channels([0  ,255,0  ,0  ])}      //g = Green
+    else if(e.which==66) {update_animotions_channels([0  ,0  ,255,0  ])}      //b = Blue
+    else if(e.which==87) {update_animotions_channels([0  ,0  ,0  ,255])}      //w = White
+    else if(e.which==96) {Clear_animotors();}                                                    //num0 = clear
+    else if(e.which==97) {Clear_animotors(); Animations[0].setAnimotor(Animations[0],1000)}      //num1 = Blocks
+    else if(e.which==98) {Clear_animotors(); Animations[1].setAnimotor(Animations[1],1000)}      //num2 = The matrix
+    else if(e.which==99) {Clear_animotors(); Animations[2].setAnimotor(Animations[2],0.0001)}    //num3 = PhantomTwon
+    else if(e.which==100){Clear_animotors(); Animations[3].setAnimotor(Animations[3],NaN)}    //num3 = PhantomTwon
+    else if(e.which==101){Clear_animotors(); Animations[4].setAnimotor(Animations[4],NaN)}    //num3 = PhantomTwon
+    else if(e.which==102){Clear_animotors(); Animations[5].setAnimotor(Animations[5],NaN)}    //num3 = PhantomTwon
     else if(e.which==83){
         if(set_strobo){
             set_strobo = 0;
@@ -293,10 +99,10 @@ document.onkeyup = function (e) {
     }
 };
 
-//TODO
+//WEBsocket
 function start_websocket(){
-        ws = new WebSocket('ws://'+document.location.host+'/wsa',['arduino']);
-    //   ws = new WebSocket('ws://192.168.2.18/wsa',['arduino']);
+      ws = new WebSocket('ws://'+document.location.host+'/wsa',['arduino']);
+    //   var ws = new WebSocket('ws://192.168.2.18/wsa',['arduino']);
 
       ws.onopen = function(e){
         console.log("Connected");
@@ -308,8 +114,8 @@ function start_websocket(){
         console.log("ws error", e);
       };
       ws.onmessage = function(e){
-        console.log(e.data);
-        var Channels = [0,0,0,0,0,0,0,0];
+        // console.log(e.data);
+        var Channels = [NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN];
         var parts = e.data.split('&');          //afvangen niet splitbaar
         for (i = 0; i < parts.length; i++){
             var mes = parts[i].split(',')
@@ -317,10 +123,10 @@ function start_websocket(){
                 Channels[mes[0]] = mes[1];
             }
         }
+        console.log(Channels);
         update_animotions_channels(Channels)
       };    
 }
-
 
 window.addEventListener('resize', function() {   
     console.log("Resize screen");
@@ -329,9 +135,7 @@ window.addEventListener('resize', function() {
     height = positionInfo.height;
     width = positionInfo.width;
     //blocksfunction!!
-    for(var i = 0; i< Animations.length; i++){
-        Animations[i].resize()
-    }
+    Resize_animations();
 });
 
 //--> ONLOAD FUNCTION 

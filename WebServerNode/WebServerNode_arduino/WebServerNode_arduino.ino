@@ -233,12 +233,30 @@ void setup(){
           ws_Animation.textAll(msg);
         }  
     });  
-  server.on("/ColorPicker", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("/ColorPicker.html", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(SPIFFS, "/ColorPicker.html", String(), false);
     });
-  server.on("/newcolor", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("/newcolor.html", HTTP_GET, [](AsyncWebServerRequest *request){
       request->send(SPIFFS, "/newcolor.html", String(), false);
     });
+
+  //intospace
+  server.on("/intospace/index.html", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/intospace/index.html", String(), false);
+    });
+  server.on("/intospace/js/Detector.js", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/intospace/js/Detector.js", String(), false);
+    });
+  server.on("/intospace/js/RequestAnimationFrame.js", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/intospace/js/RequestAnimationFrame.js", String(), false);
+    });
+  server.on("/intospace/js/Stats.js", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/intospace/js/Stats.js", String(), false);
+    });
+  server.on("/intospace/build/Three.js", HTTP_GET, [](AsyncWebServerRequest *request){
+      Serial.println("three");
+      request->send(SPIFFS, "/intospace/build/Three.js", String(), false);
+  });
   
   // Helper pages
   server.on("/libs/buttonboard.js", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -249,11 +267,27 @@ void setup(){
       Serial.println("INFO: Clientlist.js requested"); 
       request->send(SPIFFS, "/libs/ClientList.js", String(), false);
     });
+  server.on("/libs/p5_an1.js", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/libs/p5_an1.js", String(), false);
+  });
+  server.on("/libs/p5_an1.js", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/libs/p5_an1.js", String(), false);
+  });
+  server.on("/libs/p5_circler.js", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/libs/p5_circler.js", String(), false);
+  });
+  server.on("/libs/p5_full_knee.js", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/libs/p5_full_knee.js", String(), false);
+  });
+  server.on("/libs/p5_hol_camp.js", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/libs/p5_hol_camp.js", String(), false);
+  });
   server.on("/libs/p5_Phantom_town.js", HTTP_GET, [](AsyncWebServerRequest *request){
-      Serial.println("INFO: p5_Phantom_town.js requested"); 
       request->send(SPIFFS, "/libs/p5_Phantom_town.js", String(), false);
-    });
-  
+  });
+  server.on("/libs/Animations.js", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/libs/Animations.js", String(), false);
+  });
 
   // Callback functions
   server.on("/start", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -387,7 +421,6 @@ void setup(){
 
   server.onNotFound(notFound);
   server.begin();
-
   userScheduler.addTask(taskSendMessage);
 
   }
