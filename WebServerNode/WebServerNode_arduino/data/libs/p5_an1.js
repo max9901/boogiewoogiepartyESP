@@ -22,16 +22,20 @@ class p5_an1{
         this.an1.settings(this.channels);
     }
   
+    ChangeSpeed = function(){
+        console.log("todo");
+    }
     resize = function(){
-        // console.log("todo");
+        // fixed in p5
     }
   
-    setAnimotor = function(ClaSS,speed){
+    setAnimotor = function(ClaSS){
         this.dom.style.display = 'block';
-        this.an1.play(speed);
+        this.an1.reset();
+        this.an1.play();
         this.active = true;
     }
-    clearAnimotor = function(speed){
+    clearAnimotor = function(){
         this.dom.style.display = 'none';
         this.active = false;
         this.an1.pause();
@@ -39,15 +43,15 @@ class p5_an1{
   }
 
 var an1 = function( p5func ) {
-    let cells = []
-    let red   = 1
-    let green = 1
-    let blue  = 255
+    let   cells = []
+    let   red   = 1
+    let   green = 1
+    let   blue  = 255
     const r0  = 3
     const N   = 200
 
     
-    p5func.play = function(set_speed){
+    p5func.play = function(){
         p5func.loop()
     }
   
@@ -70,11 +74,7 @@ var an1 = function( p5func ) {
     p5func.reset = function(){
         cells = []
         cells.push(new P(red,green,blue))
-        cells.push(new P(red,green,blue))
-        cells.push(new P(red,green,blue))
     };
-
-
 
     class P {
         constructor(redi,greeni,bluei) {
@@ -186,7 +186,6 @@ var an1 = function( p5func ) {
 
         }
     };
-
     p5func.windowResized = function() {
         p5func.resizeCanvas(p5func.windowWidth, p5func.windowHeight);
     }

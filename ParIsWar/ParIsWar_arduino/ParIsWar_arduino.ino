@@ -1,21 +1,32 @@
-/* Welkom!
+// INFO block
+/* 
+ * Welkom!
  * Par-code base written by: Max Engelen
  * 
  * Target platform:
  *    1) ESP 01 with 39 leds attached in circles degrading in size!
  *    2) WC-rol start project 
  * 
- *Time it wil take to udpate the leds! ~onavg 
- * RGB microseconds = pixelcount x 30 + 300 + 100
- * RGBW microseconds = pixelcount x 40 + 300 + 100
+ *  OTA:firmware_<hardware>_<role>.bin
+ * 
+ * Time it wil take to udpate the leds! ~on_avg 
+ *   RGB microseconds  = pixelcount x 30 + 300 + 100
+ *   RGBW microseconds = pixelcount x 40 + 300 + 100
  * 
  * TODOlist:
  *    - Build in more Animations
- *    - Build in unit identifier    -> the network needs to know this is a par, send on message received "IDENTIFIER"
- *    - Build in MESH OTA support 
- *    
+ * 
  */
-
+//mesaging protocol
+/*
+  Messageging
+      -> listens to all broadcast 
+      -> listens to P before message 
+      -> listens to F as FULL on temperorly till next set color or next kick
+      -> listens to R as reset any Strobo or F messages. (panic button)
+      -> listens to K as kick         
+*/
+//channel protocol 
 /*
 Channel[0] = Rood led
 Channel[1] = Blue led
@@ -27,34 +38,30 @@ channel[6] = Animation select         (0 == default, 1 == random brightness, )
 channel[7] = fade_setting
 */
 
-#include "/home/max/boogiewoogiepartyESP/passwords.h"
 
-#include <painlessMesh.h>      // https://gitlab.com/painlessMesh/painlessMesh/-/wikis/home && https://github.com/arkhipenko/TaskScheduler/wiki/API-Task#task
-#include <NeoPixelBus.h>       // https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object-API
-#include <NeoPixelAnimator.h>  // https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelAnimator-object-API
+#include <painlessMesh.h>                                       // https://gitlab.com/painlessMesh/painlessMesh/-/wikis/home && https://github.com/arkhipenko/TaskScheduler/wiki/API-Task#task
+#include <NeoPixelBus.h>                                        // https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object-API
+#include <NeoPixelAnimator.h>                                   // https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelAnimator-object-API
+#include "/home/max/Documents/boogiewoogiepartyESP/passwords.h" //network settings
 
 #define   LED             LED_BUILTIN       // GPIO number of connected LED, ON ESP-12 IS GPIO2
-#define   DEBUG           true
-#define   BLINK_PERIOD    3000              //ms
-#define   BLINK_DURATION  100  
-
-#define   HOSTNAME        "PAR"
+#define   DEBUG           true              // enable extra messaging on Serial output 
 
 /*** BLACK MAGIC PAR ***/
-// #define ROLE "paresp01"
-// const uint16_t PixelCount = 39;
-// const uint8_t PixelPin = 4;  
-// NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip(PixelCount, PixelPin);
-// #define RGB 1
-// #define RGBW 0
+#define ROLE "paresp01"
+const uint16_t PixelCount = 39;
+const uint8_t PixelPin = 4;  
+NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart1800KbpsMethod> strip(PixelCount, PixelPin);
+#define RGB 1
+#define RGBW 0
 
 /*** WC DUMP par ***/
-#define ROLE "parwc"
-const uint16_t PixelCount = 12; 
-const uint8_t PixelPin = D4;  
-NeoPixelBus<NeoGrbwFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
-#define RGB 0
-#define RGBW 1
+// #define ROLE "parwc"
+// const uint16_t PixelCount = 12; 
+// const uint8_t PixelPin = D4;  
+// NeoPixelBus<NeoGrbwFeature, Neo800KbpsMethod> strip(PixelCount, PixelPin);
+// #define RGB 0
+// #define RGBW 1
 
 // class declarations
 const uint8_t AnimationChannels = 1;            //we only need one as all the pixels are animated at once
@@ -81,7 +88,6 @@ const int NUMCHANNELS = 8;
 uint8_t Channels[NUMCHANNELS];
 
 bool Strobo_en = true;
-bool onFlag = false;
 IPAddress getlocalIP();
 IPAddress myIP(0,0,0,0);
 IPAddress myAPIP(0,0,0,0);
@@ -105,7 +111,9 @@ void BlendAnimUpdate(const AnimationParam& param)
         param.progress);
     setcolor(updatedColor.R,updatedColor.G,updatedColor.B,updatedColor.W);
 }
+
 void updatecolor(uint8_t R,uint8_t G,uint8_t B,uint8_t W){
+  Serial.printf("color: %d, %d, %d, %d \n",R,G,B,W);
   if(Channels[7] == 0){
     //swap colors
     ColorState[0].PreviousColor =  ColorState[0].CurrentColor;
@@ -147,28 +155,45 @@ void setcolor(uint8_t R,uint8_t G,uint8_t B,uint8_t W){
         strip.SetPixelColor(i, color);
     }
 #endif
+strip.Show();
 }
 void Animation_func(){
-   switch(Channels[6]){
-      case 1:{
-        uint8_t Red   = (int)((double)Channels[0] * ((double)(random(10) / 10.0)));
-        uint8_t Green = (int)((double)Channels[1] * ((double)(random(10) / 10.0)));
-        uint8_t Blue  = (int)((double)Channels[2] * ((double)(random(10) / 10.0)));
-        uint8_t White = (int)((double)Channels[3] * ((double)(random(10) / 10.0)));
-        updatecolor(Red,Green,Blue,White);
-        break;
-      }
-      // case 2:{
-        // Red = 100;
-        // updatecolor(Red,Green,Blue,White);
-      // }
-      default:{
-        uint8_t Red   = Channels[0];
-        uint8_t Green = Channels[1];
-        uint8_t Blue  = Channels[2];
-        uint8_t White = Channels[3];
-        updatecolor(Red,Green,Blue,White);
-      }
+          
+  uint8_t Red   = 0;
+  uint8_t Green = 0;
+  uint8_t Blue  = 0;
+  uint8_t White = 0;
+  switch(Channels[6]){
+    case 1:{
+      Red   = (int)((double)Channels[0] * ((double)(random(10) / 10.0)));
+      Green = (int)((double)Channels[1] * ((double)(random(10) / 10.0)));
+      Blue  = (int)((double)Channels[2] * ((double)(random(10) / 10.0)));
+      White = (int)((double)Channels[3] * ((double)(random(10) / 10.0)));
+      updatecolor(Red,Green,Blue,White);
+      break;
+    }
+    case 2:{
+      int prob = 7 - (!Channels[0] + !Channels[1] + !Channels[2] + !Channels[3]);
+      if(random(10) < prob) Red   = Channels[0];
+      if(random(10) < prob) Green = Channels[1];
+      if(random(10) < prob) Blue  = Channels[2];
+      if(random(10) < prob) White = Channels[3];
+      updatecolor(Red,Green,Blue,White);
+      break;
+    }
+    case 3:{
+      int prob = 6 - (!Channels[0] + !Channels[1] + !Channels[2] + !Channels[3]);
+      if(random(10) < prob) Red   = Channels[0];
+      else if(random(10) < prob) Green = Channels[1];
+      else if(random(10) < prob) Blue  = Channels[2];
+      else if(random(10) < prob) White = Channels[3];
+      updatecolor(Red,Green,Blue,White);
+      break;
+    }
+    default:{
+      updatecolor(Channels[0],Channels[1],Channels[2],Channels[3]);
+      break;
+    }
    }
 }
 void strobo_func(){
@@ -194,90 +219,52 @@ void strobo_func(){
 //Arduino routine
 void setup() {
   Serial.begin(115200);
+  strip.Begin();
+  strip.Show();  //init strip 
   for(int i =0; i < NUMCHANNELS; i++){
     Channels[i] = 0;
   }
+  Channels[3] = 5;
+  if(DEBUG)
+    mesh.setDebugMsgTypes(ERROR | DEBUG );
+  else 
+    mesh.setDebugMsgTypes(ERROR);
 
-  if(DEBUG){
-    Channels[0] = 255;
-    Channels[1] = 0;
-    Channels[2] = 0;
-    Channels[3] = 0;
-    Channels[4] = 0;
-    Channels[5] = 100;
-    Channels[6] = 1;
-    Channels[7] = 1;
-  }
-
-  mesh.setDebugMsgTypes(ERROR | DEBUG);
-  
-  // void init(TSTRING ssid, TSTRING password, Scheduler *baseScheduler,
-  //           uint16_t port = 5555, WiFiMode_t connectMode = WIFI_AP_STA,
-  //           uint8_t channel = 1, uint8_t hidden = 0,
-  //           uint8_t maxconn = MAX_CONN) 
-
+  // void init(TSTRING ssid, TSTRING password, Scheduler *baseScheduler, uint16_t port = 5555, WiFiMode_t connectMode = WIFI_AP_STA, uint8_t channel = 1, uint8_t hidden = 0, uint8_t maxconn = MAX_CONN) 
   mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT,WIFI_AP_STA,4,0,4);
-
   mesh.onReceive(&receivedCallback);
   mesh.setRoot(false);
   mesh.setContainsRoot(true);
   mesh.initOTAReceive(ROLE);
-
   nodeID = mesh.getNodeId();
-  mesh.setRoot(false);
-  mesh.setContainsRoot(true);
-  mesh.initOTAReceive(ROLE);
 
   Strobo.set(1000,-1,[](){
       strobo_func();
   });
   userScheduler.addTask(Strobo);
-
-  blinkNoNodes.set(BLINK_PERIOD, (mesh.getNodeList().size() + 1) * 2, []() {
-      if (onFlag)
-        onFlag = false;
-      else
-        onFlag = true;
-      blinkNoNodes.delay(BLINK_DURATION);
-      if (blinkNoNodes.isLastIteration()) {
-        blinkNoNodes.setIterations((mesh.getNodeList().size() + 1) * 2);
-        blinkNoNodes.enableDelayed(BLINK_PERIOD - 
-            (mesh.getNodeTime() % (BLINK_PERIOD*1000))/1000);
-      }
-  });
-  userScheduler.addTask(blinkNoNodes);
-  blinkNoNodes.enable();
-
-  Animation.set(60000/Channels[5],-1,[](){
+  
+  Animation.set(60000/(Channels[5]+1),-1,[](){
       Animation_func();
   });
   userScheduler.addTask(Animation);
-  Animation.enable();
+  Animation_func(); //to start up the leds
 
   randomSeed(analogRead(A0));
   myAPIP = IPAddress(mesh.getAPIP());
   Serial.println("My AP IP is " + myAPIP.toString());
-  strip.Begin();
-  strip.Show();
 }
-
-
 void loop() {
   mesh.update();
   if (animations.IsAnimating()){
     animations.UpdateAnimations();
   }
-  strip.Show();
-
-  //blink amount of nodes to debug
-  if(1) digitalWrite(LED_BUILTIN, !onFlag);
+  
   //update IP
   if(myIP != getlocalIP()){
     myIP = getlocalIP();
     Serial.println("My IP is " + myIP.toString());
   }
 }
-
 
 
 // Mesh functions
@@ -321,44 +308,42 @@ void receivedCallback(uint32_t from, String & msg) {
         }
       }
     }
-    else if(str[0] == 'K'){
-      Serial.println("KICK");
+    else if(str[0] == 'K'){    //KICK
       if(Channels[5] == 255){
           Animation_func();
       }
     }
+    else if(str[0] == 'F'){    //FULL on
+      setcolor(0,0,0,255);
+    }
+    else if(str[0] == 'R'){    //reset F and strobo
+      Channels[4] = 0;
+      Animation_func();
+    }
+    else if(str[0] == 'P'){     //misschien nog detectie inbouwen voor hoeveelste par ?
+        //indicator that it is a par message 
+        continue;
+    }
     else{
-       
-       Serial.print("ERROR: Misformed message :");
        Serial.println(str);
+       return;
     }
   } //end receive!
-
   if((Channels[6] == 0)){   //if no animation is running we need to update the color!
       Animation_func();
   }
+  return;
 }
-void newConnectionCallback(uint32_t nodeId) {
-  // Reset blink task
-  onFlag = false;
-  blinkNoNodes.setIterations((mesh.getNodeList().size() + 1) * 2);
-  blinkNoNodes.enableDelayed(BLINK_PERIOD - (mesh.getNodeTime() % (BLINK_PERIOD*1000))/1000);
- 
+void newConnectionCallback(uint32_t nodeId) { 
   Serial.printf("--> startHere: New Connection, nodeId = %u\n", nodeId);
   Serial.printf("--> startHere: New Connection, %s\n", mesh.subConnectionJson(true).c_str());
 }
 void changedConnectionCallback() {
   Serial.printf("Changed connections\n");
-  // Reset blink task
-  onFlag = false;
-  blinkNoNodes.setIterations((mesh.getNodeList().size() + 1) * 2);
-  blinkNoNodes.enableDelayed(BLINK_PERIOD - (mesh.getNodeTime() % (BLINK_PERIOD*1000))/1000);
- 
+  // Reset blink task 
   nodes = mesh.getNodeList();
-
   Serial.printf("Num nodes: %d\n", nodes.size());
   Serial.printf("Connection list:");
-
   SimpleList<uint32_t>::iterator node = nodes.begin();
   while (node != nodes.end()) {
     Serial.printf(" %u", *node);

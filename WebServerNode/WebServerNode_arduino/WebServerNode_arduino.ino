@@ -1,8 +1,9 @@
-#include "painlessMesh.h"
-#include "PubSubClient.h"
+#include "painlessMesh.h"  // https://gitlab.com/painlessMesh/painlessMesh/-/wikis/home && https://github.com/arkhipenko/TaskScheduler/wiki/API-Task#task
 #include <ESPAsyncWebServer.h>
-//Change to your full Path
-#include "/home/max/boogiewoogiepartyESP/passwords.h"
+
+//Change to your full Path  ~~~ arduino and its include system..
+#include "/home/max/Documents/boogiewoogiepartyESP/passwords.h"
+
 #ifdef ESP8266
   #include "Hash.h"
   #include <FS.h>
@@ -13,11 +14,16 @@
 #endif
 
 #define   DEBUG         1
-#define   ROLE          "WebBridge"
-#define   HOSTNAME      "WebBridge"
+#define   ROLE          "WebBridge"   //max 20 chars.!
+#define   HOSTNAME      "WebBridge" 
 #define   STATION_PORT  5555
 #define   par1          3662001431
 #define   par2          3661949679
+
+struct struct_NODE {
+   String   Role;
+   uint32_t nodeId;
+} book;  
 
 painlessMesh  mesh;
 WiFiClient wifiClient;
@@ -27,6 +33,11 @@ AsyncWebServer server(80);
 AsyncWebSocket ws_ColorPicker("/wsColorPicker");  //infoChannel
 AsyncWebSocket ws_Animation("/wsa");              //AnimationChannel
 
+SimpleList<struct_NODE> nodelist;
+
+//basically 
+//std::list<uint32_t> or SimpleList mesh.getNodeList(); 
+//LinkedList<AsyncWebSocketClient *> tempws = ws_Animation.getClients();
 
 SimpleList<uint32_t> nodes;
 SimpleList<uint32_t> sockets;
@@ -34,7 +45,7 @@ SimpleList<uint32_t> sockets;
 void sendHeartBEAT(); //prototype
 bool _mesh_calc_delay = false;
 
-Task taskSendMessage( TASK_SECOND * 5, TASK_FOREVER, &sendHeartBEAT ); // start with a one second interval
+Task taskSendHeartBEAT( TASK_SECOND * 5, TASK_FOREVER, &sendHeartBEAT ); // start with a one second interval
 
 IPAddress getlocalIP(); //prototype
 IPAddress myIP(0,0,0,0);
@@ -42,13 +53,17 @@ IPAddress myAPIP(0,0,0,0);
 
 
 //funtions
+void update_nodelist(){
+
+}
+
+
 void sendoverclientlist(){
   Serial.printf("Num nodes: %d\n", nodes.size());
   Serial.printf("Connection list:");
   String listsend = "L{";
   bool newcomma = true;
   SimpleList<uint32_t>::iterator node = nodes.begin();
-
   while (node != nodes.end()){
     Serial.printf(" %u", *node);
     listsend += *node;
@@ -57,7 +72,6 @@ void sendoverclientlist(){
     if(node != nodes.end())
       listsend += ",";
   }
-
   SimpleList<uint32_t>::iterator socket = sockets.begin();
   while (socket != sockets.end()){
     if(!newcomma){
@@ -96,10 +110,10 @@ void receivedCallback( const uint32_t &from, const String &msg ) {
 }
 void newConnectionCallback(uint32_t nodeId){
     Serial.printf("--> Start: New Connection, nodeId = %u\n", nodeId);
-    Serial.printf("--> Start: New Connection, %s\n", mesh.subConnectionJson(true).c_str());
   }
 void changedConnectionCallback(){
-  Serial.printf("Changed connections\n");
+  Serial.printf("-->Changed connections:\n");
+  Serial.printf("%s\n", mesh.subConnectionJson(true).c_str());
   nodes = mesh.getNodeList();
   sendoverclientlist();
   _mesh_calc_delay = true;
@@ -129,10 +143,11 @@ String scanprocessor(const String& var){
   return String();
 }
 void sendHeartBEAT() {
-  String msg = "Hello from node ";
+  String msg = "{nodeId: ";
   msg += mesh.getNodeId();
-  msg += " , " + String(ROLE);
-  msg += " myFreeMemory: " + String(ESP.getFreeHeap());
+  msg += ", Role: " + String(ROLE);
+  msg += ", FreeMemory: " + String(ESP.getFreeHeap());
+  msg += "}";
   mesh.sendBroadcast(msg);
   if (_mesh_calc_delay) {
     SimpleList<uint32_t>::iterator node = nodes.begin();
@@ -143,8 +158,9 @@ void sendHeartBEAT() {
     _mesh_calc_delay = false;
   }
   Serial.printf("Sending message: %s\n", msg.c_str());
-  taskSendMessage.setInterval( random(TASK_SECOND * 5, TASK_SECOND * 10)); // between 1 and 5 seconds
+  taskSendHeartBEAT.setInterval(random(TASK_SECOND * 5, TASK_SECOND * 10)); // between 10 and 5 seconds
 }
+
 
 //Web functions
 void notFound(AsyncWebServerRequest *request) {
@@ -168,22 +184,46 @@ void on_ws_ColorPicker_Event(AsyncWebSocket * server, AsyncWebSocketClient * cli
   }
 }
 void on_ws_Animation_Aevent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
+  
+  Serial.print("Amount of active WS: ");
+  LinkedList<AsyncWebSocketClient *> tempws = ws_Animation.getClients();
+  Serial.println(tempws.length());
+
   if(type == WS_EVT_CONNECT){
     Serial.print("Websocket client connection received: ");
     Serial.println(client->id());
+    struct_NODE temp;
+    temp.Role = "ws_Animation";
+    temp.nodeId  = client->id();
+    nodelist.push_back(temp);
+
     sockets.push_back(client->id());
     client->text("Hello Animation server");
-  } else if(type == WS_EVT_DISCONNECT){
+  } else if(type == WS_EVT_DISCONNECT){  
     Serial.print("Client disconnected: ");
     Serial.println(client->id());
+    for(SimpleList<struct_NODE>::iterator tempnode = nodelist.begin(); tempnode != nodelist.end();){
+      if(client->id() == (tempnode->nodeId)){
+      Serial.print("deleted: {Role: ");
+      Serial.print(tempnode->Role);
+      Serial.print(", nodeId: ");
+      Serial.print(tempnode->nodeId);
+      Serial.println("}");
+        tempnode = nodelist.erase(tempnode);  
+        continue;
+      }
+      ++tempnode;
+    }
+
+    //todo weg !!
     for(SimpleList<uint32_t>::iterator socket = sockets.begin(); socket != sockets.end();){
-      Serial.println(*socket);
       if(client->id() == (*socket)){
         socket = sockets.erase(socket);  
         continue;
       }
       ++socket;
     }    
+
   }
   sendoverclientlist();
 }
@@ -204,7 +244,10 @@ void setup(){
   //           uint16_t port = 5555, WiFiMode_t connectMode = WIFI_AP_STA,
   //           uint8_t channel = 1, uint8_t hidden = 0,
   //           uint8_t maxconn = MAX_CONN) 
-  mesh.setDebugMsgTypes(ERROR | DEBUG);
+
+  // mesh.setDebugMsgTypes( ERROR | MESH_STATUS | CONNECTION | SYNC | COMMUNICATION | GENERAL | MSG_TYPES | REMOTE | DEBUG ); // all types on
+  // mesh.setDebugMsgTypes(ERROR | DEBUG);
+  mesh.setDebugMsgTypes( ERROR | MESH_STATUS ); // all types on
   mesh.init(MESH_PREFIX, MESH_PASSWORD, &userScheduler, MESH_PORT, WIFI_AP_STA, 4, 0 ,4);
   mesh.onReceive(&receivedCallback);
   mesh.onNewConnection(&newConnectionCallback);
@@ -238,6 +281,9 @@ void setup(){
     });
   server.on("/newcolor.html", HTTP_GET, [](AsyncWebServerRequest *request){
       request->send(SPIFFS, "/newcolor.html", String(), false);
+    });
+  server.on("/buttonboard.html", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/buttonboard.html", String(), false);
     });
 
   //intospace
@@ -421,19 +467,17 @@ void setup(){
 
   server.onNotFound(notFound);
   server.begin();
-  userScheduler.addTask(taskSendMessage);
-
-  }
+  userScheduler.addTask(taskSendHeartBEAT);
+  taskSendHeartBEAT.enable();
+}
 void loop(){
     ws_ColorPicker.cleanupClients();
     ws_Animation.cleanupClients();
     mesh.update();
-
     if(myIP != getlocalIP()){
       myIP = getlocalIP();
       Serial.println("My IP is " + myIP.toString());
     }
-
     if(myAPIP != IPAddress(mesh.getAPIP())){
       myAPIP = IPAddress(mesh.getAPIP());
       Serial.println("My AP IP is " + myAPIP.toString());

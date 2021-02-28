@@ -21,16 +21,19 @@ class p5_circler{
         this.circler.settings(this.channels);
     }
   
+    ChangeSpeed = function(){
+        console.log("todo");
+    }
     resize = function(){
-        // console.log("todo");
+        // fixed in p5
     }
   
-    setAnimotor = function(ClaSS,speed){
+    setAnimotor = function(ClaSS){
         this.dom.style.display = 'block';
-        this.circler.play(speed);
+        this.circler.play();
         this.active = true;
     }
-    clearAnimotor = function(speed){
+    clearAnimotor = function(){
         this.dom.style.display = 'none';
         this.active = false;
         this.circler.pause();
@@ -45,7 +48,7 @@ var circler = function( p5func ) {
         p5func.createCanvas(width,height);
     };
   
-    p5func.play = function(set_speed){
+    p5func.play = function(){
         p5func.loop()
     }
   

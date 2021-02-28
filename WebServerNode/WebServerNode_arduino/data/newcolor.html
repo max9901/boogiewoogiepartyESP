@@ -1,3 +1,15 @@
+<!-- 
+    Screen animation channels start with "W"
+    0 = red
+    1 = green
+    2 = blue
+    3 = white
+    4 = strobo
+    5 = animotion speed (BPM) --TODO
+    6 = sort of animation
+    7 = animation specific    --TODO
+ -->
+
 <!DOCTYPE html>
 <html>
     <style>   
@@ -37,7 +49,30 @@ function update_animotions_channels(Channels){
     for(var i = 0; i< Animations.length; i++){
         Animations[i].set_Channels(Channels);
     }
+    if(Channels[4]){
+        set_strobo = Channels[4];
+        clearInterval(strobo_interval);
+        document.getElementById("mainsrc").style.display = "block";
+        if(set_strobo > 0){    
+            strobo_interval = setInterval(strobohard, (1000)/((set_strobo) / 2.55));
+        }
+    }
+    if(Channels[6]){
+        Clear_animotors(); 
+        if(Channels[6] == 1)   Animations[0].setAnimotor(Animations[0]);
+        if(Channels[6] == 2)   Animations[1].setAnimotor(Animations[1]);
+        if(Channels[6] == 3)   Animations[2].setAnimotor(Animations[2]);
+        if(Channels[6] == 4)   Animations[3].setAnimotor(Animations[3]);
+        if(Channels[6] == 5)   Animations[4].setAnimotor(Animations[4]);
+        if(Channels[6] == 6)   Animations[3].setAnimotor(Animations[5]);
+    }
+    if(Channels[5]){
+        for(var i = 0; i< Animations.length; i++){
+            Animations[i].ChangeSpeed(Animations[i]);
+        }
+    }
 }
+
 function Clear_animotors(){
     for(var i = 0; i< Animations.length; i++){
         Animations[i].clearAnimotor();
@@ -49,14 +84,12 @@ function Resize_animations(){
     }
 }
 
-
 Animations.push( new Block_Animation(document.getElementById('mainsrc')))
 Animations.push( new The_Matrix(document.getElementById('mainsrc')))
 Animations.push( new p5_Phantom_town(document.getElementById('mainsrc')))
 Animations.push( new p5_hol_camp(document.getElementById('mainsrc')))
 Animations.push( new p5_an1(document.getElementById('mainsrc')))
 Animations.push( new p5_circler(document.getElementById('mainsrc')))
-
 
 //** Manage Strobo capabilities surpasses all animations and strobes the mainsrc! **//
 var set_strobo = 0;
@@ -71,17 +104,17 @@ function strobohard(){
 
 //DEBUGGING and keyboard input
 document.onkeyup = function (e) {
-    if     (e.which==82) {update_animotions_channels([255,0  ,0  ,0  ])}      //r = RED
-    else if(e.which==71) {update_animotions_channels([0  ,255,0  ,0  ])}      //g = Green
-    else if(e.which==66) {update_animotions_channels([0  ,0  ,255,0  ])}      //b = Blue
-    else if(e.which==87) {update_animotions_channels([0  ,0  ,0  ,255])}      //w = White
-    else if(e.which==96) {Clear_animotors();}                                                    //num0 = clear
-    else if(e.which==97) {Clear_animotors(); Animations[0].setAnimotor(Animations[0],1000)}      //num1 = Blocks
-    else if(e.which==98) {Clear_animotors(); Animations[1].setAnimotor(Animations[1],1000)}      //num2 = The matrix
-    else if(e.which==99) {Clear_animotors(); Animations[2].setAnimotor(Animations[2],0.0001)}    //num3 = PhantomTwon
-    else if(e.which==100){Clear_animotors(); Animations[3].setAnimotor(Animations[3],NaN)}    //num3 = PhantomTwon
-    else if(e.which==101){Clear_animotors(); Animations[4].setAnimotor(Animations[4],NaN)}    //num3 = PhantomTwon
-    else if(e.which==102){Clear_animotors(); Animations[5].setAnimotor(Animations[5],NaN)}    //num3 = PhantomTwon
+    if     (e.which==82) {update_animotions_channels([255,0  ,0  ,0    ])}      //r = RED
+    if     (e.which==71) {update_animotions_channels([0  ,255  ,0  ,0  ])}      //g
+    if     (e.which==66) {update_animotions_channels([0  ,0  ,255  ,0  ])}      //b
+    if     (e.which==89) {update_animotions_channels([255,255  ,0  ,0  ])}      //y
+    else if(e.update_animotions_channelswhich==96) {Clear_animotors();}                                                    //num0 = clear
+    else if(e.which==97) {Clear_animotors(); Animations[0].setAnimotor(Animations[0])}      //num1 = Blocks
+    else if(e.which==98) {Clear_animotors(); Animations[1].setAnimotor(Animations[1])}      //num2 = The matrix
+    else if(e.which==99) {Clear_animotors(); Animations[2].setAnimotor(Animations[2])}    //num3 = PhantomTwon
+    else if(e.which==100){Clear_animotors(); Animations[3].setAnimotor(Animations[3])}    //num3 = PhantomTwon
+    else if(e.which==101){Clear_animotors(); Animations[4].setAnimotor(Animations[4])}    //num3 = PhantomTwon
+    else if(e.which==102){Clear_animotors(); Animations[5].setAnimotor(Animations[5])}    //num3 = PhantomTwon
     else if(e.which==83){
         if(set_strobo){
             set_strobo = 0;
@@ -114,17 +147,32 @@ function start_websocket(){
         console.log("ws error", e);
       };
       ws.onmessage = function(e){
-        // console.log(e.data);
+        
         var Channels = [NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN];
         var parts = e.data.split('&');          //afvangen niet splitbaar
         for (i = 0; i < parts.length; i++){
+            console.log(parts[i]);
             var mes = parts[i].split(',')
+            
             if(mes.length == 2){
                 Channels[mes[0]] = mes[1];
+            }
+            else if(parts[i] == "W"){
+                continue;    
+            }
+            else if(parts[i] == "K"){
+                return;    
+            }
+            else if(parts[i] == "F"){
+                return;    
+            }
+            else{
+                return;
             }
         }
         console.log(Channels);
         update_animotions_channels(Channels)
+        return;
       };    
 }
 
@@ -141,7 +189,7 @@ window.addEventListener('resize', function() {
 //--> ONLOAD FUNCTION 
 function onload(){
     start_websocket();
-    update_animotions_channels([150,50,50,0]);
+    update_animotions_channels([150,50,50,0,0,60]);
 }
 
 </script>

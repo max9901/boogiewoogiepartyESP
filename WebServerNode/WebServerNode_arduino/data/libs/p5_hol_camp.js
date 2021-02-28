@@ -22,16 +22,19 @@ class p5_hol_camp{
       this.p5_hol_camp.settings(this.channels);
   }
 
+  ChangeSpeed = function(){
+     console.log("todo");
+  }
   resize = function(){
-      // console.log("todo");
+    // fixed in p5
   }
 
-  setAnimotor = function(ClaSS,speed){
+  setAnimotor = function(ClaSS){
       this.dom.style.display = 'block';
-      this.p5_hol_camp.play(speed);
+      this.p5_hol_camp.play();
       this.active = true;
   }
-  clearAnimotor = function(speed){
+  clearAnimotor = function(){
       this.dom.style.display = 'none';
       this.active = false;
       this.p5_hol_camp.pause();
@@ -54,7 +57,7 @@ var hol_camp = function( p5func ) {
     let points_2 = []
     let points_3 = []
 
-    p5func.play = function(set_speed){
+    p5func.play = function(){
       p5func.loop()
     }
 

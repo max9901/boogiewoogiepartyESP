@@ -2,7 +2,6 @@
 <html>
     <head>
         <script src='libs/buttonboard.js'></script>
-        <script src='libs/ClientList.js'></script>
         <title>Main Page</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <style>
@@ -17,7 +16,9 @@
             h2   {
                 /* border: 1px solid black; */
                 color: gainsboro;
+                margin-top: 10px;
                 margin-bottom: 0px;
+                padding:5px;
             }
             .btn {
                 border: 1px solid black;
@@ -26,6 +27,7 @@
                 color: gray;
                 padding: 15px 32px;
                 margin-bottom:5px;
+                margin-top:0px;
                 text-align: center;
                 text-decoration: none;
                 display: inline-block;
@@ -37,25 +39,6 @@
             }
             .btn:hover {opacity: 0.6}
             .btn.active {opacity: 0.7}
-
-            .client {
-                border: 1px solid black;
-                background-color: gainsboro; /* Green */
-                border: none;
-                color: gray;
-                padding: 15px 32px;
-                margin-bottom:5px;
-                text-align: center;
-                text-decoration: none;
-                display: inline-block;
-                font-size: 16px;
-                opacity: 1;
-                margin-left: 5px;
-                border-radius: 30px;
-                transition: 0.1s;
-            }
-            .client:hover{opacity:0.6}
-            .client.active{opacity:0.7}
 
             #container {
                 /* border: 1px solid black; */
@@ -73,9 +56,9 @@
                 /* border: 1px solid black; */
                 background-color: #666666;
                 border-radius: 30px;
-                margin-top: 10px;
+                margin-top: 5px;
                 margin-bottom: 5px;
-                padding: 10px;
+                padding: 0px;
                 margin-left: auto;
                 margin-right: auto;
                 text-align: center;
@@ -112,29 +95,14 @@
             </div>
         </header>
         <div id = container>
-            <h1 class = "title-global"> BoogieWoogiePartyEsp</h1>
-            <div id = options class = subcontainer>
-                <button class="btn" onclick="window.location.href='ColorPicker.html';"      > Control  </button>   
-                <button class="btn" onclick="window.location.href='newcolor.html';" > Screen </button>
-                <button class="btn" onclick="window.location.href='intospace/index.html';" > IntoSpace </button>
-                <button class="btn" onclick="window.location.href='buttonboard.html';" > ButtonBoard </button>
-            </div>
-
             <div>
-                <div id="buttonboard" class = subcontainer><h2> DeBuG tools </h2></br></div>
+                <div id="buttonboard_Broadcast" class = subcontainer><h2> Broadcast fun </h2></div>
             </div>
             <div>
-                <div id="ClientBoard" class = subcontainer><h2> Clients </h2></br></div>
+                <div id="buttonboard_PAR" class = subcontainer><h2> ParIsWar </h2></div>
             </div>
-
-            <div name = Broadcast class = subcontainer>
-                <form name=BC_FORM> <h2>Broadcast For debugging</h2>
-                    <br>
-                        <input id=bc_form_input name=BROADCAST type='text'>
-                    <br>
-                    <br>
-                        <input type='submit' value='Submit'>
-                </form>
+            <div>
+                <div id="buttonboard_Web" class = subcontainer><h2> WEBis?? </h2></div>
             </div>
             <div id="footer1" >
                 &#169;, LLC, Inc, Co, Corp, Ltd, B.V., V.O.F.
@@ -163,7 +131,6 @@
             ).replace(/ +(?= )/g, '').trim();
         }
         function SubmitBroadcast(Value){    
-            document.BC_FORM.BROADCAST.value = Value;
             var xhttp = new XMLHttpRequest();
             xhttp.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
@@ -180,6 +147,7 @@
             xhttp.send();
             return true;
         }
+
         function btn_stobo(strobo_button){
             if (strobo_button.className.includes('active')){
                 console.log("strobo ON TODO ");
@@ -210,35 +178,53 @@
                         var temp = mes.substr(2,(mes.length-3));
                         var temp2 = temp.split(",");
                         console.log(temp2);
-                        if(temp2 != ""){
-                            ClientBoard.Clients_update(temp2,false);
-                        }
-                        else {
-                            ClientBoard.Clients_reset();
-                        }
                     }
                 }
             };
         }
         
-        var buttonboard;
-        var ClientBoard;
+        var buttonboard_Broadcast;
+        var buttonboard_PAR;
+        var buttonboard_Websocket;
 
         function onloadfunc() {
             var siteWidth = 550;
             var scale = screen.width /siteWidth
             document.querySelector('meta[name="viewport"]').setAttribute('content', 'width='+siteWidth+', initial-scale='+scale+',maximum-scale=2.0, user-scalable=no');
             
-            buttonboard = new ButtonboardClass(document.getElementById('buttonboard'));
-            buttonboard.addButton_unique('strobe'    ,btn_stobo);
-            buttonboard.addButton       ('red'       ,function() {console.log("red");      SubmitBroadcast("0,255&1,0&2,0&3,0")               });
-            buttonboard.addButton       ('green'     ,function() {console.log("green");    SubmitBroadcast("0,0&1,255&2,0&3,0")               });
-            buttonboard.addButton       ('blue'      ,function() {console.log("blue");     SubmitBroadcast("0,0&1,0&2,255&3,0")               });
-            buttonboard.addButton       ('full on'   ,function() {console.log("Full on");  SubmitBroadcast("0,0&1,0&2,0&3,255")               });
-            buttonboard.addButton       ('black out' ,function() {console.log("Black out");SubmitBroadcast("0,0&1,0&2,0&3,0")                 });
-            buttonboard.addButton       ('OFF'       ,function() {console.log("Black out");SubmitBroadcast("0,0&1,0&2,0&3,0&4,0&5,0&6,0&7,0") });
+            buttonboard_Broadcast = new ButtonboardClass(document.getElementById('buttonboard_Broadcast'));
+            buttonboard_Broadcast.addButton_unique('strobe'    ,btn_stobo);
+            buttonboard_Broadcast.addButton       ('red'       ,function() {console.log("red");       SubmitBroadcast("0,255&1,0&2,0&3,0")               });
+            buttonboard_Broadcast.addButton       ('green'     ,function() {console.log("green");     SubmitBroadcast("0,0&1,255&2,0&3,0")               });
+            buttonboard_Broadcast.addButton       ('blue'      ,function() {console.log("blue");      SubmitBroadcast("0,0&1,0&2,255&3,0")               });
+            buttonboard_Broadcast.addButton       ('full on'   ,function() {console.log("Full on");   SubmitBroadcast("0,0&1,0&2,0&3,255")               });
+            buttonboard_Broadcast.addButton       ('black out' ,function() {console.log("Black out"); SubmitBroadcast("0,0&1,0&2,0&3,0")                 });
+            buttonboard_Broadcast.addButton       ('OFF'       ,function() {console.log("OFF");       SubmitBroadcast("0,0&1,0&2,0&3,0&4,0&5,0&6,0&7,0") });
 
-            ClientBoard = new ClientListClass(document.getElementById('ClientBoard'));
+
+
+            buttonboard_Broadcast = new ButtonboardClass(document.getElementById('buttonboard_PAR'));
+            buttonboard_Broadcast.addButton_unique('strobe'    ,btn_stobo);
+            buttonboard_Broadcast.addButton       ('red'       ,function() {console.log("red");       SubmitBroadcast("P&0,255&1,0&2,0&3,0")               });
+            buttonboard_Broadcast.addButton       ('green'     ,function() {console.log("green");     SubmitBroadcast("P&0,0&1,255&2,0&3,0")               });
+            buttonboard_Broadcast.addButton       ('blue'      ,function() {console.log("blue");      SubmitBroadcast("P&0,0&1,0&2,255&3,0")               });
+            buttonboard_Broadcast.addButton       ('full on'   ,function() {console.log("Full on");   SubmitBroadcast("P&0,0&1,0&2,0&3,255")               });
+            buttonboard_Broadcast.addButton       ('black out' ,function() {console.log("Black out"); SubmitBroadcast("P&0,0&1,0&2,0&3,0")                 });
+            buttonboard_Broadcast.addButton       ('OFF'       ,function() {console.log("OFF");       SubmitBroadcast("P&0,0&1,0&2,0&3,0&4,0&5,0&6,0&7,0") });
+
+
+
+            buttonboard_Broadcast = new ButtonboardClass(document.getElementById('buttonboard_Web'));
+            buttonboard_Broadcast.addButton_unique('strobe'    ,btn_stobo);
+            buttonboard_Broadcast.addButton       ('red'       ,function() {console.log("red");       SubmitBroadcast("W&0,255&1,0&2,0&3,0")               });
+            buttonboard_Broadcast.addButton       ('green'     ,function() {console.log("green");     SubmitBroadcast("W&0,0&1,255&2,0&3,0")               });
+            buttonboard_Broadcast.addButton       ('blue'      ,function() {console.log("blue");      SubmitBroadcast("W&0,0&1,0&2,255&3,0")               });
+            buttonboard_Broadcast.addButton       ('full on'   ,function() {console.log("Full on");   SubmitBroadcast("W&0,0&1,0&2,0&3,255")               });
+            buttonboard_Broadcast.addButton       ('black out' ,function() {console.log("Black out"); SubmitBroadcast("W&0,0&1,0&2,0&3,0")                 });
+            buttonboard_Broadcast.addButton       ('OFF'       ,function() {console.log("OFF");       SubmitBroadcast("W&0,0&1,0&2,0&3,0&4,0&5,0&6,0&7,0") });
+
+
+
             start_websocket();
 
         } 

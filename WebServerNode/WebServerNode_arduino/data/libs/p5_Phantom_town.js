@@ -22,16 +22,19 @@ class p5_Phantom_town{
         this.p5_hol_camp.settings(this.channels);
     }
 
-    resize = function(){
+    ChangeSpeed = function(){
         console.log("todo");
     }
+    resize = function(){
+        // fixed in p5
+    }
 
-    setAnimotor = function(ClaSS,speed){
+    setAnimotor = function(ClaSS){
         this.dom.style.display = 'block';
-        this.p5_hol_camp.play(speed);
+        this.p5_hol_camp.play();
         this.active = true;
     }
-    clearAnimotor = function(speed){
+    clearAnimotor = function(){
         this.dom.style.display = 'none';
         this.active = false;
         this.p5_hol_camp.pause();
@@ -44,7 +47,7 @@ var Phantom_town = function(p5func) {
     let green = 0
     let blue = 0
     
-    let speed = 0.00002
+    let speed = 0.0001
     let a = 0.9
     let b = 2
 
@@ -56,16 +59,14 @@ var Phantom_town = function(p5func) {
         red   = channels[0]/2;
         green = channels[1]/2;
         blue  = channels[2]/2;
-        // white = channels[3];
-
-        // console.log(channels);
-        // a     = channels[4];
+        speed     = channels[5]*0.000001;
+        console.log(speed);
+        
         // b     = channels[5];
         // c     = channels[6];
     };
 
-    p5func.play = function(set_speed){
-        speed = set_speed
+    p5func.play = function(){
         p5func.loop()
     }
 

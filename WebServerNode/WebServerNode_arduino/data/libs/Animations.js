@@ -1,9 +1,9 @@
-//Channels 1 2 3 4 --> inUSE ATM rgbw
+//Channels 1 2 3 5 7--> inUSE ATM rgbw
 class Block_Animation{
     dom = {}
-    //Channels 1 2 3 4 --> inUSE ATM
-    channels = [255,0,0,0,0,0,0,0]; // r g b w size  
-    size = 250;
+    //Channels 0 1 2 3 5 --> inUSE ATM  4 reserved for strobo
+    channels = [255,0,0,0,0,0,0,75]; 
+    size  = 250;
 
     Animation = function(){
         for (var i = this.dom.Blocks.length; i > 0 ; i--) {
@@ -57,6 +57,17 @@ class Block_Animation{
             this.dom.style.width  =  this.size*nbW + 'px';
             this.dom.style.height =  this.size*nbH + 'px';
 
+            if(!(nbW*nbH)){
+                this.dom.style.width  =  '100%';
+                this.dom.style.height =  '100%';
+                var block = {}
+                block = document.createElement('div');
+                block.className = 'Animation_block';                
+                block.style.width =  '100%'; 
+                block.style.height = '100%'; 
+                this.dom.appendChild(block);
+                this.dom.Blocks.push(block);
+            }
             for(var i=0;i<(nbW*nbH);i++){
                 var block = {}
                 block = document.createElement('div');
@@ -95,16 +106,24 @@ class Block_Animation{
         }
 
     }
-    setAnimotor   = function(ClaSS,speed){
+    setAnimotor   = function(ClaSS){
         this.dom.style.display = 'block';
-        this.animotor =  setInterval(function(){ClaSS.Animation()},speed);
+        this.size = this.channels[7]*4;
+        console.log(this.size);
+        this.resize()
+        this.animotor =  setInterval(function(){ClaSS.Animation()},60000/this.channels[5]+10);
+    }
+    ChangeSpeed   = function(ClaSS){
+        clearInterval(this.animotor);
+        this.animotor =  setInterval(function(){ClaSS.Animation()},60000/this.channels[5]+10);
     }
     clearAnimotor = function(){
         this.dom.style.display = 'none';
         clearInterval(this.animotor);
     }
 }
-//Channels 1 2 3 4 --> inUSE ATM rgbw
+
+//Channels 1 2 3 --> inUSE ATM rgbw
 class The_Matrix{
     dom = {}  //canvas ?
     channels = [255,0,0,0,0,0,0,0]; // r g b w 
@@ -135,6 +154,7 @@ class The_Matrix{
                 this.channels[i] = +set_channels[i];
             }
         }
+        console.log(this.channels);
     }
     Animation = function(){
         this.ctx.fillStyle = '#0001';
@@ -158,9 +178,14 @@ class The_Matrix{
             else this.ypos[ind] = y + 20;
         });
     }
-    setAnimotor = function(ClaSS,speed){
+    setAnimotor = function(ClaSS){
         this.dom.style.display = 'block';
-        this.animotor =  setInterval(function(){ClaSS.Animation()},speed/8);
+
+        this.animotor =  setInterval(function(){ClaSS.Animation()},60000/this.channels[5]/10+10);
+    }
+    ChangeSpeed   = function(ClaSS){
+        clearInterval(this.animotor);
+        this.animotor =  setInterval(function(){ClaSS.Animation()},60000/this.channels[5]/10+10);
     }
     clearAnimotor = function(){
         this.dom.style.display = 'none';
